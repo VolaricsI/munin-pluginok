@@ -1,0 +1,129 @@
+#!/bin/bash
+#
+# Plugin to monitor Power Supply status by VolaricsI
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+PS_DIR="/sys/class/power_supply"
+STATUSOK="present online"			##Lehetséges státuszok
+ERTEKEK="voltage_now current_now"		#Lehetséges értekek
+KIZART_ESZKOZOK="/aminemkell/"			#Kellenek a / jelek elötte és utánna
+FILENAME="PowerSupply_"
+
+SpE=0		##Status vagy ertekek: 0: Status, 1: Értékek
+
+Mit=$( basename $0 |sed "s/${FILENAME}//; s/-/ /g;" )
+	case "${Mit}" in
+		"")
+			SpE=0
+		;;
+		"value")
+			SpE=1
+		;;
+		*)
+			SpE=1
+			ERTEKEK=${Mit}
+		;;
+	esac
+
+if [ "$1" = "autoconf" ]; then
+	if [ ! -d ${PS_DIR} ]; then
+		echo no;	exit 1
+	fi
+	echo yes;	exit 0
+fi
+
+ListDevice(){
+    ls "${PS_DIR}"|while read a; do
+		[ ! -e "${PS_DIR}/${a}/uevent" ] && continue
+		echo -n "${KIZART_ESZKOZOK}" |grep -c "/${a}/" 	1>/dev/null
+		[ $? -eq 0 ] && continue
+		echo "${a}"
+    done
+}; Lista=$( ListDevice )
+
+Conf_Status(){
+	echo 'graph_title Power supply(s) status.'
+	id=-2;
+	for i in ${Lista} ; do
+	    id=$[ ${id} + 2 ];
+	    for j in ${STATUSOK} ; do
+		[ ! -e ${PS_DIR}/${i}/${j} ] && continue
+		echo "${i}_${j}.label A(z) ${i} ${j}: ${id}/$[ ${id} + 1 ]."
+	    done
+	done
+}
+
+Conf_Ertek(){
+	echo 'graph_title Power supply(s) values.'
+	id=-2;
+	for i in ${Lista} ; do
+	    for j in ${ERTEKEK} ; do
+		[ ! -e ${PS_DIR}/${i}/${j} ] && continue
+		echo -n  "${i}_${j}.label A(z) ${i} ${j} "
+		case "${j}" in
+			voltage_now)
+				echo "[mV]."
+			;;
+			current_now)
+				echo "[mA]."
+			;;
+			*)
+				echo "[--]."
+			;;
+		esac
+	    done
+	done
+}
+
+
+if [ "$1" == "config" ]; then
+	echo 'graph_category Power'
+	echo 'graph_vlabel Power Supply(s).'
+	echo 'graph_info This graph shows Power Supply(s).'
+	[ "${SpE}" -eq 0 ] && Conf_Status
+	[ "${SpE}" -eq 1 ] && Conf_Ertek
+	exit 0
+fi
+
+
+Value_Status(){
+	id=-2;
+	for i in ${Lista} ; do
+	    id=$[ ${id} + 2 ];
+	    for j in ${STATUSOK} ; do
+		[ ! -e "${PS_DIR}/${i}/${j}" ] && continue
+		tmp=$( cat "${PS_DIR}/${i}/${j}" )
+		echo "${i}_${j}.value $[ ${id} + ${tmp} ]"
+	    done
+	done
+}
+
+Value_Ertek(){
+	for i in ${Lista} ; do
+	    for j in ${ERTEKEK} ; do
+		[ ! -e "${PS_DIR}/${i}/${j}" ] && continue
+		tmp=$( cat "${PS_DIR}/${i}/${j}" )
+		case "${j}" in
+			voltage_now|current_now)
+				tmp=$[ tmp/1000 ]
+			;;
+			capacity)
+				tmp="${tmp}"
+			;;
+			*)
+				tmp="$tmp ERROR"
+			;;
+		esac
+		echo "${i}_${j}.value ${tmp}"
+	    done
+	done
+}
+
+    [ "${SpE}" -eq 0 ] && Value_Status
+    [ "${SpE}" -eq 1 ] && Value_Ertek
+    exit 0

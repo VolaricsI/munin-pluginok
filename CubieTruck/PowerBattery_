@@ -1,0 +1,166 @@
+#!/bin/bash
+#
+# Plugin to monitor Power Supply status by VolaricsI
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+PS_DIR="/sys/class/power_supply"
+STATUSOK="present online status health"		##Lehetséges státuszok
+ERTEKEK="voltage_now current_now capacity temp voltage_max_design voltage_min_design energy_full_design cycle_count"		#Lehetse ertekek
+KIZART_ESZKOZOK="/aminemkell/"				#Kellenek a / jelek elötte utánna
+
+ISMERETLEN_STATUS="Egyeb"
+##Az ${STATUSOK}-ban lévő(k)-vel megeggyező névvel kell szerepeltetni!!! Kell a "\n" ez az elválasztó!!
+#present="	a: Nincs\n	b: Van"
+status="0: Full\n1: Charging\n2: Discharging\n3: Egyeb."
+#health="0: UNKNOWN\n1: Good\n2: OVERHEAT\n3: DEAD\n4: OVERVOLTAGE\n5: UNSPEC_FAILURE\n6: COLD\n6: WATCHDOG_TIMER_EXPIRE\n7: SAFETY_TIMER_EXPIRE"
+health="0: Good\n2: Egyeb."
+
+FILENAME="PowerBattery_"
+
+SpE=0		##Status vagy ertekek: 0: Status, 1: Értékek
+
+Mit=$( basename $0 |sed "s/${FILENAME}//; s/-/ /g;" )
+	case "${Mit}" in
+		"")
+			SpE=0
+		;;
+		"value")
+			SpE=1
+		;;
+		*)
+			SpE=1
+			ERTEKEK=${Mit}
+		;;
+	esac
+
+if [ "$1" = "autoconf" ]; then
+	if [ ! -d ${PS_DIR} ]; then
+		echo no;	exit 1
+	fi
+	echo yes;	exit 0
+fi
+
+ListDevice(){
+    ls "${PS_DIR}"|while read a; do
+		[ ! -e "${PS_DIR}/${a}/type" ] && continue
+		[ $( cat "${PS_DIR}/${a}/type" ) != "Battery" ] && continue
+		echo -n "${KIZART_ESZKOZOK}" |grep -c "/${a}/" 	1>/dev/null
+		[ $? -eq 0 ] && continue
+		echo "${a}"
+    done
+}; Lista=$( ListDevice )
+
+Conf_Status(){
+	echo 'graph_title Battery(s) status.'
+	for i in ${Lista} ; do
+	    for j in ${STATUSOK} ; do
+		[ ! -e "${PS_DIR}/${i}/${j}" ] && continue
+		echo -n "${i}_${j}.label A(z) ${i} ${j}: "
+		if [ ".${!j}" == "." ]; then
+			echo "0/1."
+		else
+			echo "${!j}."|sed 's/\\n/, /g'
+		fi
+	    done
+	done
+}
+
+Conf_Ertek(){
+	echo 'graph_title Battery(s) values.'
+	id=-2;
+	for i in ${Lista} ; do
+	    for j in ${ERTEKEK} ; do
+		[ ! -e ${PS_DIR}/${i}/${j} ] && continue
+		echo -n  "${i}_${j}.label A(z) ${i} ${j} "
+		case "${j}" in
+			voltage_now|voltage_max_design|voltage_min_design)
+				echo "[mV]."
+			;;
+			current_now)
+				echo "[mA]."
+			;;
+			capacity)
+				echo "[%]."
+			;;
+			temp)
+				echo "[fok]."
+			;;
+			energy_full_design)
+				echo "[mAh]."
+			;;
+			capacity)
+				echo "[%]."
+			;;
+			*)
+				echo "[--]."
+			;;
+		esac
+	    done
+	done
+}
+
+if [ "$1" == "config" ]; then
+	echo 'graph_category Power'
+	echo 'graph_vlabel Battery(s).'
+	echo 'graph_info This graph shows Battery(s).'
+	[ "${SpE}" -eq 0 ] && Conf_Status
+	[ "${SpE}" -eq 1 ] && Conf_Ertek
+	exit 0
+fi
+
+
+Value_Status(){
+	id=-2;
+	for i in ${Lista} ; do
+	    id=$[ ${id} + 2 ];
+	    for j in ${STATUSOK} ; do
+		[ ! -e "${PS_DIR}/${i}/${j}" ] && continue
+		echo -n "${i}_${j}.value "
+		v1=$( cat "${PS_DIR}/${i}/${j}" )
+		if [ ".${!j}" == "." ]; then
+			echo "$[ ${v1} + ${id} ]"
+			continue
+		fi
+		v2=$( echo -e "${!j}"|grep "${v1}"|sed 's/:.\+//g' )
+		if [ ".${v2}" != "." ] ; then
+		    echo "$[ ${v2} + ${id} ]"
+		    continue
+		fi
+		v3=$( echo -e "${!j}"|grep "${ISMERETLEN_STATUS}"|sed 's/:.\+//g' )
+		echo "$[ ${v3} + ${id} ]"
+	    done
+	done
+}
+Value_Ertek(){
+	for i in ${Lista} ; do
+	    for j in ${ERTEKEK} ; do
+		[ ! -e "${PS_DIR}/${i}/${j}" ] && continue
+		v=$( cat "${PS_DIR}/${i}/${j}" )
+		case "${j}" in
+			current_now|voltage_now|voltage_max_design|voltage_min_design)
+				v=$[ ${v}/1000 ]
+			;;
+			energy_full_design|capacity|cycle_count)
+				v="${v}"
+			;;
+			temp)
+				v=$( echo "${v}" |sed 's/\([0-9]$\)/.\1/' )
+			;;
+			*)
+				v="$v ERROR"
+			;;
+		esac
+		echo "${i}_${j}.value ${v}"
+	    done
+	done
+}
+
+
+    [ "${SpE}" -eq 0 ] && Value_Status
+    [ "${SpE}" -eq 1 ] && Value_Ertek
+    exit 0
