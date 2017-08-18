@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# Plugin to monitor Internet (bix.hu).
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+HOST=bix.hu
+HOSTS="bix.hu terminal.hu"	# tullnerattila.myip.hu volaricsbp.myip.hu"
+
+PING=/bin/ping
+
+if [ "$1" = "autoconf" ]; then
+	if [ ! -x ${PING} ]; then
+		echo no
+		exit 1
+	fi
+	echo yes
+	exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category Voli_Network'
+	echo 'graph_title Internet letezes'
+	echo 'graph_vlabel Internet []'
+	echo 'graph_info This graph shows how Internet exitst.'
+	for i in ${HOSTS}; do
+	    Host_=$(echo $i|sed 's/\./_/g')
+	    echo "$Host_.label $i"
+#	    echo "$Host_.min 0"
+	done
+	exit 0
+fi
+
+for i in ${HOSTS}; do
+	Host_=$(echo $i|sed 's/\./_/g')
+	${PING} -w 5 -c 2 -q ${i}	2>/dev/null	1>&2
+	if [ "$?" == "0" ]; then Ret=1; else Ret=0; fi
+	echo "${Host_}.value ${Ret}"
+done
+
+exit 0

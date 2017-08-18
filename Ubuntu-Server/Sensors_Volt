@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+#:::::: Beallitasok :::::::::::
+#:::::: Ellenorzesek ::::::::::
+#:::::: functions :::::::::::::
+
+if [ "$1" = "autoconf" ]; then
+	echo yes 
+	exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category sensors'
+	echo 'graph_title Feszultsegek'
+	echo 'graph_vtitle [V]'
+	echo 'graph_args --base 1000 -l 0'
+	echo 'graph_vlabel [V]'
+	SorSzam=0
+	sensors |grep -e" V " -e " V$"|sed 's/ .*//g'|while read a; do
+		SorSzam=$[${SorSzam}+1];
+		echo "Volt${SorSzam}.label ${a}"
+		echo "Volt${SorSzam}.min 0"
+		echo "Volt${SorSzam}.max 20"
+		done
+	exit 0
+fi
+
+#:::::: Start :::::::::::::::::
+SorSzam=0
+sensors |grep -e" V " -e " V$"|sed 's/^.*://g; s/ V.*//g; s/+//g'|while read a; do
+	SorSzam=$[${SorSzam}+1];
+#	echo ${a}
+	Ertek=`echo ${a}|sed 's/.* //g'`
+	echo "Volt${SorSzam}.value ${Ertek}"
+done
+
+exit 0

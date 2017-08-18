@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# Plugin to monitor Internet (bix.hu).
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+#SH_OUT=MYSHAPER-OUT
+DEV=enp3s0
+CLASS=htb
+CLASS_ROOT="1:1"
+
+Nevesites(){
+	Tmp=$( tc -s class show dev $DEV	|grep -e "class htb" -e "rate"	\
+		|sed 's/root.*//g; s/parent.*//g; s/bit.*//g' )
+	echo ${Tmp}|sed 's/class/\n/g; s/ \+//g; s/:/_/g; '		\
+	|sed 's/htb/htb_/g; s/rate/\.value /g; s/K/000/g; s/M/000000/g'	\
+	|grep "."
+}
+
+if [ "$1" = "autoconf" ]; then
+	echo yes
+	exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category Network'
+	echo "graph_title ${DEV} forgalom szabalyozas"
+	echo "graph_vlabel ${DEV} forgalom [bit]"
+	echo "graph_info This graph shows how ${DEV} forgalom."
+#	echo "${CLASS}.label A ${DEV} max UP speed limit."
+
+	echo "${CLASS}.label htb_1_max"
+	echo "${CLASS}.info Az ${DEV} csatoló beállított sebesség maximuma."
+
+	tc -d class show dev $DEV	|grep -e "class ${CLASS}"	\
+	|sed 's/root.*//g; s/parent.*//g; s/class //g; s/ *$//g; s/[ :]/_/g;'	\
+	|while read i; do
+	    echo "${i}.label $i"
+	    echo "${i}.min 0"
+	    case "${i}" in
+		htb_1_1)	echo "${i}.info Összesített forgalom"
+		;;
+		htb_1_10)	echo "${i}.info ICMP,DNS,ssh,kicsi csomagok"
+		;;
+		htb_1_20)	echo "${i}.info Administrációk, alapértelmezett"
+		;;
+		htb_1_30)	echo "${i}.info www"
+		;;
+		htb_1_40)	echo "${i}.info NetCraft,BitSync,TeamSpeak3"
+		;;
+		htb_1_50)	echo "${i}.info Torrentek"
+		;;
+		*)		echo "${i}.info Ismeretlen...."
+	    esac
+	done
+	exit 0
+fi
+
+	echo -n "${CLASS}.value "
+	tc -d class show dev ${DEV} classid ${CLASS_ROOT}|sed 's/.*ceil //g; s/bit.*$//g; s/K$/000/; s/M$/000000/g '
+
+	Tmp=$( tc -s class show dev ${DEV}	|grep -e "class htb" -e "rate"	\
+		|sed 's/root.*//g; s/parent.*//g; s/Kbit.*/000/g; s/bit.*//g; ' )
+	echo ${Tmp} |sed 's/^class //g; s/ class /\n/g; s/[ :]/_/g; s/_rate_/\.value /g; '
+exit 0

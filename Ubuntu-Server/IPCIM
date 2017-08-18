@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Plugin to monitor host to IP.by VolaricsI
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+#Melyik hostokat vizsgálom
+HOSTS="volaricsi.dyndns.org volarics.hu "
+
+if [ "$1" = "autoconf" ]; then
+	echo yes
+exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo	'graph_category Voli_Network'
+	echo	'graph_args --base 1000'
+	echo	'graph_title IP CIM'
+	echo	'graph_vlabel IP cim erteke'
+	echo	'graph_info This graph shows the HOST IP cime'
+
+	for i in ${HOSTS}; do
+		echo -n ${i}|sed 's/\./_/g';	echo ".label ${i}"
+	done
+exit 0
+fi
+
+#Az IP-k kiolvasása
+for i in ${HOSTS}; do
+	echo -n ${i}|sed 's/\./_/g';	echo -n ".value "
+	host ${i}|grep "has address"|sed 's/.*address//g; s/\.//g; '
+done
+
+exit 0

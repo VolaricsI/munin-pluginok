@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Plugin to monitor HDD hömerseklet.
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+
+SMART_PRG=/usr/sbin/smartctl
+SMART_PARAM="-d sat -a -T permissive "
+
+SMART_STRING="Temperature_Celsius"
+##SMART_STRING="Temperature"
+
+MAX_TEMP="60"
+
+#Milyen hdd-k vannak a gepben
+Hddk=$( ls /dev/[s,h]d[a-x]|sed 's/.*\///g; ' )
+
+
+if [ ".$1" = ".autoconf" ]; then
+	if [ "." == ".${Hddk}" ]; then
+		echo no;	exit 1
+	fi
+	echo yes;	exit 0
+fi
+
+if [ ".$1" = ".config" ]; then
+	echo 'graph_category sensors'
+	echo 'graph_args --base 1000'
+	echo 'graph_title HDD homerseklet'
+	echo 'graph_vlabel  �Celsius'		#°Celsius
+	echo 'graph_info This graph shows the temperature in degrees Celsius of the hard drives in the machine.'
+
+	for i in ${Hddk}; do
+		echo "${i}.label $i"
+	done
+	exit 0
+fi
+
+#A hömérsékletek kiolvasása
+    for i in ${Hddk}; do
+	Ret=$( ${SMART_PRG} ${SMART_PARAM} /dev/${i}	|grep "${SMART_STRING}"	|sed 's/^.*- \+//g; s/ .*$//g' )
+	if [ ".${Ret}" == "." ];	then continue; fi
+	if [ ${Ret} -gt ${MAX_TEMP} ];	then continue; fi
+	echo "${i}.value ${Ret}"
+    done
+exit 0
