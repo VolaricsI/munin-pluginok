@@ -6,11 +6,9 @@
 #
 # 	config   (required)
 # 	autoconf (optional - used by munin-config)
+# Created by Voli
 
-
-SERVER=owserver
-
-Csere="	s/2814873C050000$/CPU_csonk/;	s/28236D3C050000$/HDD_vgnas/;	s/2840783C050000$/RAM/;			\
+Csere="	s/2814873C050000$/CPU_csonk/;	s/28236D3C050000$/HDD_vgnas/;	s/2840783C050000$/SAS_card/;		\
 	s/28868C3C050000$/Levego_ki/;	s/289A883C050000$/Levego_be/;	s/28AC6D3C050000$/HDD_vgdeluge/;	\
 	s/28E9953C050000$/HDD_root/;	"
 
@@ -43,7 +41,7 @@ fi
 
 	Lista |while read a; do
 		echo -n "${a}.value "
-		owread -C /${a}/temperature10		#CSak 10 bit-es felbontás
+		owread -C /${a}/temperature10		#CSak 10 bit-es felbontás mert az elég
 		echo
 	done
-exit 0
+	exit 0

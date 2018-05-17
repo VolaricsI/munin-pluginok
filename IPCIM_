@@ -1,12 +1,13 @@
 #!/bin/sh
 #
-# Plugin to monitor host to IP.by VolaricsI
+# Plugin to monitor host to IP
 #
 # Parameters understood:
 #
 # 	config   (required)
 # 	autoconf (optional - used by munin-config)
 #
+# Created by Voli
 
 #Melyik hostokat vizsgálom
 HOST="volaricsi.dyndns.org"

@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+MODEM_URL=http://192.168.100.1/cgi-bin/status_cgi
+NAME=$( basename $0 )
+ADATLAP=/var/lib/munin-node/plugin-state/nobody/${NAME//_*/}.dat		##Azért kell mert egymás után nem lehet többször lekérni az oldalt...
+TMP_FILE=/tmp/${NAME}$$
+#:::::: Beallitasok :::::::::::
+Mit=SNR					#Meg ezeket tudja: Downstream; Upstream
+#:::::: Ellenorzesek ::::::::::
+#:::::: functions :::::::::::::
+function Letoltes(){
+	curl --connect-timeout 5 -s ${MODEM_URL}	>${TMP_FILE}
+	Ret=$?; if [ ${Ret} != 0 ] ; then return; fi
+	cat ${TMP_FILE}	\
+	|sgrep '"<body>" .. "</body>"'				\
+	|sgrep '"<tbody>" .. "</tbody>"'			\
+	|grep -e "Upstream" -e "Downstream"			\
+	|sed 's/<tr><td>/\n/g; s/\(stream\) /\1_/g; '		\
+	|sed 's/dB<\/td><td>.*/dB/g; s/<\/td><td>.* MHz//g; s/<\/td><td>DOCSIS.*//g; '	\
+	|sed 's/<\/td><td>/\t/g; '								>${ADATLAP}
+	rm ${TMP_FILE}
+	date +"$0 %Y.%m.%d %H:%M:%S $*."		>>${ADATLAP}
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then
+	echo yes 
+	exit 0
+fi
+
+	H=${NAME//*_/}
+	if [ "${H}" != "${NAME}" ]; then
+		Mit=${H}
+	fi
+
+if [ "$1" = "config" ]; then
+	Letoltes
+	DataIdeje=$( cat ${ADATLAP} |grep ${NAME//_*/} )
+
+	echo 'graph_category modem'
+	echo 'graph_args --base 1000'
+	case ${Mit} in
+		SNR)	echo "graph_title  Arris RF Downstream Jel/zaj viszony (SNR)"
+			echo "graph_vlabel ${Mit} [dB]"
+			cat ${ADATLAP}	|grep "^Downstream"|sed 's/\t.\+//g; s/\(.*\)/\1.label \1/g; '
+		;;
+		*)	echo "graph_title  Arris RF ${Mit} Power"
+			echo "graph_vlabel ${Mit} [dBmV]"
+			cat ${ADATLAP}	|grep "^${Mit}"|sed 's/\t.\+//g; s/\(.*\)/\1.label \1/g; '
+		;;
+	esac
+	echo "graph_info Adatok ideje: ${DataIdeje}."
+	exit 0
+fi
+
+	case ${Mit} in
+		SNR)	cat ${ADATLAP}	|grep "^Downstream"|sed 's/ dB//g; s/\t.\+\t/.value /g; '
+		;;
+		*)	cat ${ADATLAP}	|grep "^${Mit}"|sed 's/ dBmV.*//g; s/\t/.value /g; '
+		;;
+	esac
+	exit 0

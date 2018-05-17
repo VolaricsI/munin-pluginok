@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Plugin to monitor Idokep automata.by VolaricsI
+# Plugin to monitor Idokep automata
 #
 # Parameters understood:
 #
 # 	config   (required)
 # 	autoconf (optional - used by munin-config)
 #
+# Created by Voli
 
 #HOST="192.168.0.90"
 HOST="idokep_automata"
@@ -19,7 +20,8 @@ Mit="homerseklet"	#Meg ezeket tudja: homerseklet; paratartalom; legnyomas; Csapa
 function GetMit(){
 	wget -t 1 -T 5 -nv -o /dev/null -O -  "${URL}" \
 	|sgrep '"<h2>WS23XX m&eacute;rt adatai</h2> " .. "<h2>TE923/TE823 m&eacute;rt adatai</h2>"' 	|grep -v -e "^<.*> *$" -e "^$"|sed 's/<pre>//g; ' \
-	|grep "${Mit}" 	>${ADATLAP}
+	|grep "${Mit}"
+#	|grep "${Mit}" 	>${ADATLAP}
 }
 
 
@@ -33,9 +35,6 @@ if [ ".${H}" != "." ]; then
 	Mit=${H}
 fi
 
-ADATLAP=${ADATLAP}${Mit}
-
-    [ ".$1" == "."  -o   ! -e ${ADATLAP} ] && GetMit
 
 if [ ".$1" = ".config" ]; then
 	echo	'graph_category Idokep'
@@ -45,7 +44,7 @@ if [ ".$1" = ".config" ]; then
 	echo	"graph_info This graph shows the ${Mit}"
 	case "${Mit}" in
 		legnyomas)
-			echo "graph_args --upper-limit 1100 --lower-limit 900"
+			echo "graph_args --upper-limit 1050 --lower-limit 950"
 		;;
 		paratartalom)
 			echo "graph_args --upper-limit 100 --lower-limit 0 --rigid"
@@ -54,12 +53,17 @@ if [ ".$1" = ".config" ]; then
 		#
 		;;
 	esac
-	cat ${ADATLAP}	|sed 's/=.*//g'		\
-	|while read a; do
+	GetMit 	|sed 's/=.*//g' |while read a; do
 		echo "${a}.label ${a}"
 	done
-	rm  ${ADATLAP}; exit 0
+	exit 0
 fi
 
-	cat ${ADATLAP}	|sed 's/=/.value /g; '
-	rm ${ADATLAP}; 	exit 0
+	GetMit 	|sed 's/=/.value /g; ' |while read a; do
+	    Ertek=$( echo "${a}" |sed 's/.* //g' )
+	    [ "${Mit}" = "paratartalom" ] && [ ${Ertek} -gt 100 ] && continue;					## 100%-nál nincs nagyobb, legalábbis nálunk
+	    [ "${Mit}" = "homerseklet"  ] && [ ".${Ertek}" = ".81.0" ] && continue;				##Ez a külső hőmérséklet, ha nincs kapcsolat a kültérivel
+	    [ "${Mit}" = "homerseklet"  ] && [ $( echo "${Ertek}"|sed 's/\.//g' ) -gt 450 ] && continue;	##45.0 --> 450 nincs nagyobb hőmérséklet
+	    echo "${a}"
+	done
+	exit 0

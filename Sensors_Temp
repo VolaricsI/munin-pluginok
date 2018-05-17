@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+#:::::: Beallitasok :::::::::::
+#:::::: Ellenorzesek ::::::::::
+#:::::: functions :::::::::::::
+
+if [ "$1" = "autoconf" ]; then
+	echo yes
+	exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category sensors'
+	echo 'graph_title Homersekletek'
+	echo 'graph_vtitle Â°C'
+	echo 'graph_args --base 1000'
+	echo 'graph_vlabel °Celsius'	#°C
+	SorSzam=0
+	sensors |grep -e "Temp" -e "temp[1-9]"|sed 's/:.*//g'|while read a; do
+		SorSzam=$[${SorSzam}+1];
+		echo "Temp${SorSzam}.label ${a}"
+#		echo "Temp${SorSzam}.min 0"
+		done
+	exit 0
+fi
+
+#:::::: Start :::::::::::::::::
+SorSzam=0
+sensors |grep -e "Temp" -e "temp[1-9]"|sed 's/.C.*//g; s/+//g'|while read a; do
+	SorSzam=$[${SorSzam}+1];
+#	echo ${a}
+
+	Ertek=`echo ${a}|sed 's/.* //g'`
+
+	echo "Temp${SorSzam}.value ${Ertek}"
+done
+
+exit 0

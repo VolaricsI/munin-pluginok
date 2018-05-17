@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# Plugin to monitor Idokep automata légnyomás változásra -100HPa kivonásra kerül
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+# Created by Voli
+
+#HOST="192.168.0.90"
+HOST="idokep_automata"
+
+URL="http://${HOST}/cgi-bin/luci/admin/status/automata/"
+
+ADATLAP=/tmp/Idokep_	#Ide kerül a szürt kiolvasás
+Mit="legnyomas"
+
+function GetMit(){
+	wget -t 1 -T 5 -nv -o /dev/null -O -  "${URL}" \
+	|sgrep '"<h2>WS23XX m&eacute;rt adatai</h2> " .. "<h2>TE923/TE823 m&eacute;rt adatai</h2>"' 	|grep -v -e "^<.*> *$" -e "^$"|sed 's/<pre>//g; ' \
+	|grep "${Mit}"
+}
+
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then
+	echo yes;	exit 0
+fi
+
+if [ ".$1" = ".config" ]; then
+	echo	'graph_category Idokep'
+	echo	'graph_args --base 1000'
+	echo	"graph_title Idokep legnyomas diferencia"
+	echo	"graph_vlabel Idokep legnyomas [hPa]"
+	echo	"graph_info Legnyomas ertekek -100HPa"
+	GetMit 	|sed 's/=.*//g' |while read a; do
+		echo "${a}.label ${a}"
+	done
+	exit 0
+fi
+
+	GetMit 	|sed 's/=/.value /g; ' |while read a; do
+		b=${a// */}
+		e=${a//* /}; e=${e//./}
+		c=$[${e}-10000000]
+		g=$[$c/10000]
+		h=.${c//$g/}
+		echo "${b} ${g}${h}"
+	done
+	exit 0

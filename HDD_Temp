@@ -6,12 +6,16 @@
 #
 # 	config   (required)
 # 	autoconf (optional - used by munin-config)
+# Created by Voli
 
-SMART_PRG=/usr/sbin/smartctl
-SMART_PARAM="-d sat -a -T permissive "
+##		/etc/munin/plugin-conf.d/HDD_Temp		##Csak root-ként tudsz smart-ot olvasni
+#		[HDD_Temp]
+#		user root
 
-SMART_STRING="Temperature_Celsius"
-##SMART_STRING="Temperature"
+
+SMART_RUN="/usr/sbin/smartctl -d sat -a -T permissive "
+SMART_TEMP="Temperature_Celsius"
+SMART_MODEL="Device Model:"
 
 MAX_TEMP="60"
 
@@ -20,10 +24,8 @@ Hddk=$( ls /dev/[s,h]d[a-x]|sed 's/.*\///g; ' )
 
 
 if [ ".$1" = ".autoconf" ]; then
-	if [ "." == ".${Hddk}" ]; then
-		echo no;	exit 1
-	fi
-	echo yes;	exit 0
+	echo yes
+	exit 0
 fi
 
 if [ ".$1" = ".config" ]; then
@@ -34,14 +36,15 @@ if [ ".$1" = ".config" ]; then
 	echo 'graph_info This graph shows the temperature in degrees Celsius of the hard drives in the machine.'
 
 	for i in ${Hddk}; do
-		echo "${i}.label $i"
+		echo -n "${i}.label "
+		${SMART_RUN} /dev/${i} 	|grep "${SMART_MODEL}"|sed "s/${SMART_MODEL} *//g; "
 	done
 	exit 0
 fi
 
 #A hömérsékletek kiolvasása
     for i in ${Hddk}; do
-	Ret=$( ${SMART_PRG} ${SMART_PARAM} /dev/${i}	|grep "${SMART_STRING}"	|sed 's/^.*- \+//g; s/ .*$//g' )
+	Ret=$( ${SMART_RUN} /dev/${i} 	|grep "${SMART_TEMP}"	|sed 's/^.*- \+//g; s/ .*$//g' )
 	if [ ".${Ret}" == "." ];	then continue; fi
 	if [ ${Ret} -gt ${MAX_TEMP} ];	then continue; fi
 	echo "${i}.value ${Ret}"

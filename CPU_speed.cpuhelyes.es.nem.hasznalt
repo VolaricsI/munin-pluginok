@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# Plugin to monitor CPU speed.by VolaricsI
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+#
+# Create by Voli
+# CPU-nként helyes a sebesség megjelenítés!
+#
+
+ATLAG=cpu_
+CPU_HELY=/sys/devices/system/cpu
+SPEED_HELY=cpufreq/scaling_cur_freq
+
+if [ "$1" = "autoconf" ]; then
+	if [ ! -d $CPU_HELY ]; then
+		echo no
+		exit 1
+	fi
+	if [ ! -r $CPU_HELY/cpu0/$SPEED_HELY ]; then
+		echo no
+		exit 1
+	fi
+	echo yes
+exit 0
+fi
+
+#Milyen CPU-k vannak a gépen
+Cpuk=""
+for a in `ls $CPU_HELY|grep cpu[0-9]` ; do
+	if [ ! -d $CPU_HELY/$a ]; then continue; fi
+	Cpuk="$Cpuk $a"
+done
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category system'
+	echo 'graph_title CPU speed'
+	echo 'graph_vlabel CPU speed [Hz]'
+	echo 'graph_info This graph shows how CPU speed.'
+	for i in $Cpuk; do
+		echo "$i.label $i"
+#		echo "$i.min 0"
+	done
+	echo "${ATLAG}.label Atlag"
+exit 0
+fi
+
+#echo $Cpuk
+cnt=0; Cpu=0;
+for i in $Cpuk; do
+	Ret=`cat $CPU_HELY/$i/$SPEED_HELY 2>/dev/null`
+	echo "${i}.value ${Ret}000"
+	cnt=$[${cnt}+1]; Cpu=$[${Cpu}+${Ret}];
+done
+	Cpu=$[$Cpu/$cnt];
+	echo "${ATLAG}.value ${Cpu}000"
+exit 0

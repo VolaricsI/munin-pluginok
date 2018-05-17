@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+MODEM_SRC=http://192.168.100.1/cmSignalData.htm
+#:::::: Beallitasok :::::::::::
+#:::::: Ellenorzesek ::::::::::
+#:::::: functions :::::::::::::
+
+if [ "$1" = "autoconf" ]; then
+	echo yes 
+exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category network'
+	echo 'graph_title Modem Total Uncorrectable Codewords'
+	echo 'graph_args --base 1000'
+#	echo 'graph_args --base 1000 -l 0 '
+	echo 'graph_vlabel Modem Total Uncorrectable Codewords'
+	echo 'error1.label Bonding Channel  9'
+#	echo 'error1.min 0'
+	echo 'error2.label Bonding Channel 10'
+#	echo 'error2.min 0'
+	echo 'error3.label Bonding Channel 11'
+#	echo 'error3.min 0'
+	echo 'error4.label Bonding Channel 12'
+#	echo 'error4.min 0'
+exit 0
+fi
+
+
+#:::::: Start :::::::::::::::::
+
+SorSzam=0;
+wget -t 1 -T 10 -O - ${MODEM_SRC}	2>/dev/null		\
+|sgrep '"<TR>" .. "Total Uncorrectable Codewords" .. "</TR>"'	\
+|sed 's/&nbsp;<\/TD>/\n/g; s/<TD>//g'|grep "^[0-9]\+"		\
+|while read a; do
+	SorSzam=$[${SorSzam}+1];
+#	echo ---${a}-${SorSzam}--
+	echo "error${SorSzam}.value ${a}"
+done
+
+exit 0

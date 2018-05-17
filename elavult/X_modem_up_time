@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+MODEM_SRC=http://192.168.100.1/indexData.htm
+#SRC_FILE=/tmp/indexData.htm$$
+#:::::: Beallitasok :::::::::::
+#:::::: Ellenorzesek ::::::::::
+#:::::: functions :::::::::::::
+
+if [ "$1" = "autoconf" ]; then
+	echo yes
+exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category network'
+	echo 'graph_title Modem Uptime'
+	echo 'graph_args --base 1000 -l 0 '
+	echo 'graph_vlabel Modem uptime in days'
+	echo 'uptime.label Modem uptime'
+	echo 'uptime.draw AREA'
+exit 0
+fi
+
+#:::::: Start :::::::::::::::::
+
+A=`wget -t 1 -T 10 -O - ${MODEM_SRC}	2>/dev/null		\
+|sgrep '"<TR>" .. "System Up Time" .. "</TR>"'	|grep " days "	\
+|sed 's/^.*<TD>//g; s/<\/TD>.*$//g'				\
+|sed 's/h:/ hours /g; s/m:/ minutes /g; s/s$/ seconds/g'`
+
+Plusz=`date --date "$A" "+%s"`
+Most=`date "+%s"`
+cnt=$[$Plusz-$Most]
+
+#echo ${A}
+#echo Plusz: $Plusz
+#echo Most : $Most
+#echo $cnt
+
+if [ 0 -gt ${cnt} ]; then cnt="0"; fi
+
+echo $cnt|env LC_ALL=C awk '{printf "uptime.value %.2f\n",$1/86400}'
+
+exit 0
