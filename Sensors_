@@ -1,0 +1,78 @@
+#!/bin/bash
+#
+# Created by Voli
+
+#:::::: Fix beallitasok :::::::
+HO="°C"
+#:::::: Beallitasok :::::::::::
+#:::::: Ellenorzesek ::::::::::
+#:::::: functions :::::::::::::
+
+
+
+Mit=$( basename $0 ); Mit=${Mit//*_/}
+if [ ".${Mit}" = "." ]; then
+	echo "Nincs megfelelő feltét.... (Temp,Fan,Volt)"
+	exit 0
+fi
+	case ${Mit} in
+		Temp)
+			Filter="°C"
+		;;
+		Fan)
+			Filter=" RPM "
+		;;
+		Volt)
+			Filter=" V "
+		;;
+		*)
+			echo Rosz feltét.....
+			exit 0
+		;;
+	esac
+
+##echo ...............; read a; exit 0
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then
+	echo yes
+	exit 0
+fi
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category sensors'
+
+	case ${Mit} in
+		Temp)
+			echo 'graph_title Homersekletek'
+			echo 'graph_vtitle °C'
+			echo 'graph_vlabel �Celsius'	#°C	a megjelenítés miatt
+		;;
+		Fan)
+			echo 'graph_title Ventillator fordulatszamok'
+			echo 'graph_vtitle 1/perc'
+			echo 'graph_vlabel 1/perc [RPM]'
+		;;
+		Volt)
+			echo 'graph_title Feszultseg ertekek'
+			echo 'graph_vtitle Volt'
+			echo 'graph_vlabel Volt [V]'
+		;;
+	esac
+
+	SorSzam=0
+	sensors |grep -e "${Filter}" |while read a; do
+		a=${a//:*/}
+		SorSzam=$[${SorSzam}+1];
+		echo "${Mit}${SorSzam}.label ${a}"
+	done
+	exit 0
+fi
+
+
+	SorSzam=0
+	sensors |grep -e "${Filter}" |while read a; do
+		a=${a//*:/}; a=${a/${Filter}*}; a=${a// /}
+		SorSzam=$[${SorSzam}+1];
+		echo "${Mit}${SorSzam}.value ${a}"
+	done
+	exit 0

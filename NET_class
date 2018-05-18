@@ -1,14 +1,15 @@
 #!/bin/sh
 #
-# Plugin to monitor Internet (bix.hu).
+# Plugin to monitor trafic controll
 #
 # Parameters understood:
 #
 # 	config   (required)
 # 	autoconf (optional - used by munin-config)
 #
+# Created by Voli
 
-CLASS=htb
+##CLASS=htb
 CLASS_ROOT="1:1"
 
 export  $( grep "^DEV=" /etc/voli-init/voli-myshaper )
@@ -35,7 +36,6 @@ if [ "$1" = "config" ]; then
 	echo "graph_title ${DEV} forgalom szabalyozas"
 	echo "graph_vlabel ${DEV} forgalom [bit]"
 	echo "graph_info This graph shows how ${DEV} forgalom."
-#	echo "${CLASS}.label A ${DEV} max UP speed limit."
 
 	echo "${CLASS}.label htb_1_max"
 	echo "${CLASS}.info Az ${DEV} csatoló beállított sebesség maximuma."
