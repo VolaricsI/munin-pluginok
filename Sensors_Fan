@@ -1,9 +1,10 @@
 #!/bin/bash
 #
-#	Create by Voli
+# Created by Voli
 
 #:::::: Fix beallitasok :::::::
-MAX_FORDULAT=3000
+FORDULAT_MAX=3000
+FORDULAT_HIBAS=23
 #:::::: Beallitasok :::::::::::
 #:::::: Ellenorzesek ::::::::::
 #:::::: functions :::::::::::::
@@ -16,15 +17,12 @@ fi
 if [ "$1" = "config" ]; then
 	echo 'graph_category sensors'
 	echo 'graph_title Ventillator fordulatszamok'
-	echo 'graph_vtitle RPM'
-#	echo 'graph_args --base 1000 -l 0'
-	echo 'graph_args --base 1000'
+	echo 'graph_vtitle 1/perc [rpm]'
 	echo 'graph_vlabel RPM'
 	SorSzam=0
-	sensors |grep "RPM"|sed 's/ .*//g'|while read a; do
+	sensors |grep "RPM"|sed 's/: .*//g'|while read a; do
 		SorSzam=$[${SorSzam}+1];
 		echo "Fan${SorSzam}.label ${a}"
-#		echo "Fan${SorSzam}.min 0"
 		done
 	exit 0
 fi
@@ -36,11 +34,8 @@ sensors |grep "RPM"|sed 's/RPM.*//g'|while read a; do
 #	echo ${a}
 	Ertek=`echo ${a}|sed 's/.* //g'`
 
-	if [ ${Ertek} -gt ${MAX_FORDULAT} ]; then Ertek=23
+	if [ ${Ertek} -gt ${FORDULAT_MAX} ]; then Ertek=${FORDULAT_HIBAS}
 	fi
-
-#	if [ ${Ertek} = 0 ]; then continue;
-#	fi
 
 	echo "Fan${SorSzam}.value ${Ertek}"
 done

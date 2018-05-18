@@ -8,10 +8,14 @@
 # 	autoconf (optional - used by munin-config)
 #
 
-#SH_OUT=MYSHAPER-OUT
-DEV=enp3s0
 CLASS=htb
 CLASS_ROOT="1:1"
+
+export  $( grep "^DEV=" /etc/voli-init/voli-myshaper )
+
+if [ ".$DEV" = "." ]; then DEV=enp3s0 ; fi
+
+##DEV=enp3s0
 
 Nevesites(){
 	Tmp=$( tc -s class show dev $DEV	|grep -e "class htb" -e "rate"	\

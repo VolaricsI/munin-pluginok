@@ -1,8 +1,9 @@
 #!/bin/bash
 #
-#	Create by Voli
+# Created by Voli
 
 #:::::: Fix beallitasok :::::::
+HO="Â°C"
 #:::::: Beallitasok :::::::::::
 #:::::: Ellenorzesek ::::::::::
 #:::::: functions :::::::::::::
@@ -16,26 +17,22 @@ if [ "$1" = "config" ]; then
 	echo 'graph_category sensors'
 	echo 'graph_title Homersekletek'
 	echo 'graph_vtitle Â°C'
-	echo 'graph_args --base 1000'
-	echo 'graph_vlabel °Celsius'	#°C
+	echo 'graph_vlabel °Celsius'	#Â°C	a megjelenÃ­tÃ©s miatt
 	SorSzam=0
-	sensors |grep -e "Temp" -e "temp[1-9]"|sed 's/:.*//g'|while read a; do
+	sensors |grep -e "${HO}" |while read a; do
+		a=${a//:*/}
 		SorSzam=$[${SorSzam}+1];
 		echo "Temp${SorSzam}.label ${a}"
-#		echo "Temp${SorSzam}.min 0"
 		done
 	exit 0
 fi
 
 #:::::: Start :::::::::::::::::
 SorSzam=0
-sensors |grep -e "Temp" -e "temp[1-9]"|sed 's/.C.*//g; s/+//g'|while read a; do
+sensors |grep -e "${HO}" |while read a; do
+	a=${a//*:/}; a=${a/${HO}*}; a=${a// /}
 	SorSzam=$[${SorSzam}+1];
-#	echo ${a}
-
-	Ertek=`echo ${a}|sed 's/.* //g'`
-
-	echo "Temp${SorSzam}.value ${Ertek}"
+	echo "Temp${SorSzam}.value ${a}"
 done
 
 exit 0
