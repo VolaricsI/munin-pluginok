@@ -61,7 +61,7 @@ if [ "$1" = "config" ]; then
 		;;
 		htb_1_40)	echo "${Class}.info NetCraft,BitSync,TeamSpeak3. ${Sebesseg}"
 		;;
-		htb_1_50)	echo "${Class}.info Torrentek. ${Sebesseg}"
+		htb_1_50)	echo "${Class}.info P2P. ${Sebesseg}"
 		;;
 		*)		echo "${Class}.info Ismeretlen.... ${Sebesseg}"
 	    esac
@@ -73,10 +73,8 @@ fi
 	HtbMax=${HtbMax// /}; HtbMax=${HtbMax//Kbit/000}; HtbMax=${HtbMax//Mbit/000000};
 	echo "htb_max.value ${HtbMax}"
 
-#	tc -d class show dev ${DEV} classid ${CLASS_ROOT}|sed 's/.*ceil //g; s/bit.*$//g; s/K$/000/; s/M$/000000/g '
-
 	Tmp=$( tc -s class show dev ${DEV}	|grep -e "class htb" -e "rate"	\
-		|sed 's/root.*//g; s/parent.*//g; s/Kbit.*/000/g; s/bit.*//g; ' )
+		|sed 's/root.*//g; s/parent.*//g; s/Kbit.*/000/g; s/bit.*//g; ' 	)
 
 	Tmp=$( tc -s class show dev enp3s0 |grep -e "class htb" -e "rate" |sed 's/1:1 /1:01 /g; s/parent.*//g; s/root.*//g; s/Kbit/000bit/g; s/Mbit/000000bit/g; s/bit.*//g; ' )
 	echo ${Tmp} |sed 's/^class //g; s/ class /\n/g; s/[ :]/_/g; s/_rate_/\.value /g; '

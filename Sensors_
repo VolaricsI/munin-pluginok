@@ -65,8 +65,7 @@ if [ "$1" = "config" ]; then
 fi
 
 	SorSzam=0
-	sensors |grep -e "${Filter}" |while read a; do
-		a=${a//*:/}; a=${a/${Filter}*}; a=${a// /}
+	sensors |grep -e "${Filter}" |sed "s/.*://g; s/${Filter}.*$//g; s/ //g;" |while read a; do
 		SorSzam=$[${SorSzam}+1];
 		echo "${Mit}${SorSzam}.value ${a}"
 	done
