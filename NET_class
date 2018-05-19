@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Plugin to monitor trafic controll
 #
@@ -14,9 +14,11 @@ CLASS_ROOT="1:1"
 
 export  $( grep "^DEV=" /etc/voli-init/voli-myshaper )
 
-if [ ".$DEV" = "." ]; then DEV=enp3s0 ; fi
+if [ ".$DEV" = "." ]; then 
+	echo Hiba a DEV értékében....
+	exit 1
+fi
 
-##DEV=enp3s0
 
 Nevesites(){
 	Tmp=$( tc -s class show dev $DEV	|grep -e "class htb" -e "rate"	\
@@ -37,37 +39,45 @@ if [ "$1" = "config" ]; then
 	echo "graph_vlabel ${DEV} forgalom [bit]"
 	echo "graph_info This graph shows how ${DEV} forgalom."
 
-	echo "${CLASS}.label htb_1_max"
-	echo "${CLASS}.info Az ${DEV} csatoló beállított sebesség maximuma."
+	echo "htb_max.label htb_max"
+	echo "htb_max.info  Az ${DEV} csatolón beállított sebesség maximuma."
 
-	tc -d class show dev $DEV	|grep -e "class ${CLASS}"	\
-	|sed 's/root.*//g; s/parent.*//g; s/class //g; s/ *$//g; s/[ :]/_/g;'	\
-	|while read i; do
-	    echo "${i}.label $i"
-	    echo "${i}.min 0"
-	    case "${i}" in
-		htb_1_1)	echo "${i}.info Összesített forgalom"
+	tc  class show dev  enp3s0	\
+	|sed 's/^class htb /htb_/g; s/1:1 /1:01 /g; s/:/_/g; s/burst.*$//g; s/ceil/\//g; s/parent/root/g; s/root.*rate/Garantalt\/Max:/g; '\
+	|sort |while read i; do
+	    Class=${i// */};
+	    Sebesseg=${i//${Class}/};
+
+	    echo "${Class}.label ${Class}"
+	    echo "${Class}.min 0"
+	    case "${Class}" in
+		htb_1_01)	echo "${Class}.info Összesített forgalom. ${Sebesseg}"
 		;;
-		htb_1_10)	echo "${i}.info ICMP,DNS,ssh,kicsi csomagok"
+		htb_1_10)	echo "${Class}.info ICMP,DNS,ssh,kicsi csomagok. ${Sebesseg}"
 		;;
-		htb_1_20)	echo "${i}.info Administrációk, alapértelmezett"
+		htb_1_20)	echo "${Class}.info Administrációk, alapértelmezett. ${Sebesseg}"
 		;;
-		htb_1_30)	echo "${i}.info www"
+		htb_1_30)	echo "${Class}.info www. ${Sebesseg}"
 		;;
-		htb_1_40)	echo "${i}.info NetCraft,BitSync,TeamSpeak3"
+		htb_1_40)	echo "${Class}.info NetCraft,BitSync,TeamSpeak3. ${Sebesseg}"
 		;;
-		htb_1_50)	echo "${i}.info Torrentek"
+		htb_1_50)	echo "${Class}.info Torrentek. ${Sebesseg}"
 		;;
-		*)		echo "${i}.info Ismeretlen...."
+		*)		echo "${Class}.info Ismeretlen.... ${Sebesseg}"
 	    esac
 	done
 	exit 0
 fi
 
-	echo -n "${CLASS}.value "
-	tc -d class show dev ${DEV} classid ${CLASS_ROOT}|sed 's/.*ceil //g; s/bit.*$//g; s/K$/000/; s/M$/000000/g '
+	HtbMax=$( tc -d class show dev enp3s0 |grep "root" |sed 's/ceil.*//g; s/^.*rate//g; ' )
+	HtbMax=${HtbMax// /}; HtbMax=${HtbMax//Kbit/000}; HtbMax=${HtbMax//Mbit/000000};
+	echo "htb_max.value ${HtbMax}"
+
+#	tc -d class show dev ${DEV} classid ${CLASS_ROOT}|sed 's/.*ceil //g; s/bit.*$//g; s/K$/000/; s/M$/000000/g '
 
 	Tmp=$( tc -s class show dev ${DEV}	|grep -e "class htb" -e "rate"	\
 		|sed 's/root.*//g; s/parent.*//g; s/Kbit.*/000/g; s/bit.*//g; ' )
+
+	Tmp=$( tc -s class show dev enp3s0 |grep -e "class htb" -e "rate" |sed 's/1:1 /1:01 /g; s/parent.*//g; s/root.*//g; s/Kbit/000bit/g; s/Mbit/000000bit/g; s/bit.*//g; ' )
 	echo ${Tmp} |sed 's/^class //g; s/ class /\n/g; s/[ :]/_/g; s/_rate_/\.value /g; '
 exit 0
