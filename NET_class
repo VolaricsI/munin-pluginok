@@ -9,9 +9,6 @@
 #
 # Created by Voli
 
-##CLASS=htb
-CLASS_ROOT="1:1"
-
 export  $( grep "^DEV=" /etc/voli-init/voli-myshaper )
 
 if [ ".$DEV" = "." ]; then 
