@@ -1,51 +1,31 @@
 24c24,25
-< PLUGINS="cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats"
+< PLUGINS="df cpu if_ if_err_ load memory processes swap netstat uptime interrupts irqstats ntpdate plugindir_"
 ---
-> ##By Voli PLUGINS="cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats"
-> PLUGINS="cpu if_ load memory processes netstat uptime interrupts irqstats wifi"
-30a32,72
-> 			####################By Voli
-> config_wifi(){
->   echo "graph_title WiFi kapcsolodas"
->   echo "graph_vlabel A WiFi-re csatlakozas idotartama"
->   echo "graph_category Voli"
-> 
-> 	##Static DHCP nevek
-> 	List0=" $( grep "dhcp-host=" /var/etc/dnsmasq.conf |sed 's/dhcp-host=//g; s/,.*//g; ' ) "
-> 
-> 	##Kapott DHCP-vel IP-t
-> 	List1=" $( sed 's/^[0-9]\+ //g; s/ .*//g;' /var/dhcp.leases ) "
-> 
-> 	##Aktiv WiFi kapcsolatok
-> 	List2=" $( for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
-> 			iw $i station dump|grep Station|sed 's/Station//g; s/^ *//g; s/ .*//g; '
-> 		done ) "
-> 
-> 	##Azonossak kivetele, de a sorrend nem valtozik
-> 	for i in ${List0}  ${List1} ${List2}; do
-> 		echo $i
-> 	done |sort -u -m \
-> 		|while read a; do
-> 			Neve=$( grep "${a}" /var/etc/dnsmasq.conf|sed 's/.*,//g; ' )						#Static DHCP-ben a neve
-> 			if [ -z ${Neve} ]; then
-> 			   Neve=$( grep "${a}" /var/dhcp.leases |sed 's/^[0-9]\+ [0-9a-f:]\+ [0-9.]\+ //g; s/ .\+//g;' ) 	#DHCP-ben milyen nevet mondott
-> 			fi
-> 			if [ -z ${Neve} ]; then Neve=${a}; fi
-> 			echo V${a}.label ${Neve} |sed 's/://g;'		## : nem lehet internal name és label sem
-> 		done;
-> }
-> fetch_wifi(){
-> for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
-> 
->     iw $i station dump|grep -e "Station" -e "connected time:" |sed 's/Station//g; s/connected time://g; '
-> done |sed 's/^ *//g; s/ .*//g; ' |while read a; do
-> 	read b;
-> 	if [ -z ${b} ]; then continue; fi
-> 	echo -n "V${a}.value " |sed 's/://g;'
-> 	echo $((${b}/60))
-> done
-> }
-457c499
+> ##PLUGINS="df cpu if_ if_err_ load memory processes swap netstat uptime interrupts irqstats ntpdate plugindir_"
+>   PLUGINS="df cpu if_         load memory processes      netstat uptime interrupts irqstats         plugindir_"
+38c39
+<   for PART in $(df -P | grep '^/' | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$//g')
+---
+>   for PART in $(df -P | grep '^/' | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$/\1/g')
+44,45c45,46
+<     echo "$PNAME.warning 92"
+<     echo "$PNAME.critical 98"
+---
+> #    echo "$PNAME.warning 92"
+> #    echo "$PNAME.critical 98"
+49c50
+<   for PART in $(df -P | grep '^/' | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$//g')
+---
+>   for PART in $(df -P | grep '^/' | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$/\1/g')
+508c509
 < graph_args --base 1000 -l 0;
 ---
 > graph_args --base 1000 -l 0
+608c609
+<     for INTER in $(grep -E '^ *(ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
+---
+>     for INTER in $(grep -E '^ *(6in4|ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
+616c617
+<     for INTER in $(grep -E '^ *(ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
+---
+>     for INTER in $(grep -E '^ *(6in4|ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');

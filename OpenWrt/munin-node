@@ -21,56 +21,39 @@ NTP_PEER="pool.ntp.org";
 PLUGINPATTERN=$(dirname $0)"/munin-node-plugin.d/*"
 
 # Remove unwanted plugins from this list
-##By Voli PLUGINS="cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats"
-PLUGINS="cpu if_ load memory processes netstat uptime interrupts irqstats wifi"
+##PLUGINS="df cpu if_ if_err_ load memory processes swap netstat uptime interrupts irqstats ntpdate plugindir_"
+  PLUGINS="df cpu if_         load memory processes      netstat uptime interrupts irqstats         plugindir_"
 # ===== LIB FUNCTIONS =====
 clean_fieldname() {
   echo "$@" | sed -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g'
 }
 
 # ===== PLUGINS CODE =====
-			####################By Voli
-config_wifi(){
-  echo "graph_title WiFi kapcsolodas"
-  echo "graph_vlabel A WiFi-re csatlakozas idotartama"
-  echo "graph_category Voli"
 
-	##Static DHCP nevek
-	List0=" $( grep "dhcp-host=" /var/etc/dnsmasq.conf |sed 's/dhcp-host=//g; s/,.*//g; ' ) "
-
-	##Kapott DHCP-vel IP-t
-	List1=" $( sed 's/^[0-9]\+ //g; s/ .*//g;' /var/dhcp.leases ) "
-
-	##Aktiv WiFi kapcsolatok
-	List2=" $( for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
-			iw $i station dump|grep Station|sed 's/Station//g; s/^ *//g; s/ .*//g; '
-		done ) "
-
-	##Azonossak kivetele, de a sorrend nem valtozik
-	for i in ${List0}  ${List1} ${List2}; do
-		echo $i
-	done |sort -u -m \
-		|while read a; do
-			Neve=$( grep "${a}" /var/etc/dnsmasq.conf|sed 's/.*,//g; ' )						#Static DHCP-ben a neve
-			if [ -z ${Neve} ]; then
-			   Neve=$( grep "${a}" /var/dhcp.leases |sed 's/^[0-9]\+ [0-9a-f:]\+ [0-9.]\+ //g; s/ .\+//g;' ) 	#DHCP-ben milyen nevet mondott
-			fi
-			if [ -z ${Neve} ]; then Neve=${a}; fi
-			echo V${a}.label ${Neve} |sed 's/://g;'		## : nem lehet internal name és label sem
-		done;
+config_df() {
+  echo "graph_title Filesystem usage (in %)
+graph_args --upper-limit 100 -l 0
+graph_vlabel %
+graph_category disk
+graph_info This graph shows disk usage on the machine."
+  for PART in $(df -P | grep '^/' | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$/\1/g')
+  do
+    PINFO=$(df -P $PART | tail -1);
+    PNAME=$(echo $PINFO | cut -d\  -f1 | sed 's/\//_/g')
+    echo "$PNAME.label $PART"
+    echo "$PNAME.info $PNAME -> $PART"
+#    echo "$PNAME.warning 92"
+#    echo "$PNAME.critical 98"
+  done
 }
-fetch_wifi(){
-for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
-
-    iw $i station dump|grep -e "Station" -e "connected time:" |sed 's/Station//g; s/connected time://g; '
-done |sed 's/^ *//g; s/ .*//g; ' |while read a; do
-	read b;
-	if [ -z ${b} ]; then continue; fi
-	echo -n "V${a}.value " |sed 's/://g;'
-	echo $((${b}/60))
-done
+fetch_df() {
+  for PART in $(df -P | grep '^/' | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$/\1/g')
+  do
+    PINFO=$(df -P $PART | tail -1);
+    PNAME=$(echo $PINFO | cut -d\  -f1 | sed 's/[\/.-]/_/g')
+    echo "$PNAME.value" $(echo $PINFO | sed -e 's/\%//g' -e 's/  */ /g' | cut -f5 -d' ')
+  done
 }
-
 config_cpu() {
   extinfo=""
   if grep '^cpu \{1,\}[0-9]\{1,\} \{1,\}[0-9]\{1,\} \{1,\}[0-9]\{1,\} \{1,\}[0-9]\{1,\} \{1,\}[0-9]\{1,\} \{1,\}[0-9]\{1,\} \{1,\}[0-9]\{1,\}' /proc/stat >/dev/null 2>&1; then
@@ -183,7 +166,7 @@ config_if() {
   fi
 }
 fetch_if() {
-  IINFO=$(cat /proc/net/dev | sed -e 's/-/_/g' | grep "$1:" | cut -d: -f2 | sed -e 's/  */ /g' -e 's/^[ 	]*//')
+  IINFO=$(grep "$1:" /proc/net/dev | cut -d: -f2 | sed -e 's/  */ /g' -e 's/^[ 	]*//')
   echo "down.value" $(echo $IINFO | cut -d\  -f1)
   echo "up.value" $(echo $IINFO | cut -d\  -f9)
 }
@@ -204,7 +187,7 @@ config_if_err() {
   echo "trans.warning 1"
 }
 fetch_if_err() {
-  IINFO=$(cat /proc/net/dev | sed -e 's/-/_/g' | grep "$1:" | cut -d: -f2 | sed -e 's/  */ /g' -e 's/^[ 	]*//')
+  IINFO=$(grep "$1:" /proc/net/dev | cut -d: -f2 | sed -e 's/  */ /g' -e 's/^[ 	]*//')
   echo "rcvd.value" $(echo $IINFO | cut -d\  -f3)
   echo "trans.value" $(echo $IINFO | cut -d\  -f11)
 }
@@ -422,6 +405,33 @@ config_processes() {
 fetch_processes() {
   echo "processes.value" $(echo /proc/[0-9]* | wc -w)
 }
+config_swap() {
+  echo "graph_title Swap in/out"
+  echo "graph_args -l 0 --base 1000"
+  echo "graph_vlabel pages per \${graph_period} in (-) / out (+)"
+  echo "graph_category system"
+  echo "swap_in.label swap"
+  echo "swap_in.type DERIVE"
+  echo "swap_in.max 100000"
+  echo "swap_in.min 0"
+  echo "swap_in.graph no"
+  echo "swap_out.label swap"
+  echo "swap_out.type DERIVE"
+  echo "swap_out.max 100000"
+  echo "swap_out.min 0"
+  echo "swap_out.negative swap_in"
+}
+fetch_swap() {
+  if [ -f /proc/vmstat ]; then
+    SINFO=$(cat /proc/vmstat)
+    echo "swap_in.value" $(echo "$SINFO" | grep "^pswpin" | cut -d\  -f2)
+    echo "swap_out.value" $(echo "$SINFO" | grep "^pswpout" | cut -d\  -f2)
+  else
+    SINFO=$(grep "^swap" /proc/stat)
+    echo "swap_in.value" $(echo "$SINFO" | cut -d\  -f2)
+    echo "swap_out.value" $(echo "$SINFO" | cut -d\  -f3)
+  fi
+}
 config_netstat() {
   echo "graph_title Netstat"
   echo "graph_args -l 0 --base 1000"
@@ -530,6 +540,29 @@ fetch_irqstats() {
     echo "i$ID.value $VALUE"
   done
 }
+config_ntpdate() {
+  echo "graph_title NTP offset and dealy to peer $NTP_PEER"
+  echo "graph_args --base 1000 --vertical-label msec"
+  echo "offset.label Offset"
+  echo "offset.draw LINE2"
+  echo "delay.label Delay"
+  echo "delay.draw LINE2"
+}
+
+fetch_ntpdate() {
+  NTPDATE="/usr/sbin/ntpdate"
+  OFFSET=0
+  DELAY=0
+  if [ "$NTP_PEER" != "" ]; then 
+    if [ -x "$NTPDATE" ]; then 
+      DATA=$($NTPDATE -q $NTP_PEER | awk '/^server.*offset/{gsub(/,/,"");printf "%s %s", ($6*1000), ($8*1000);}')
+      OFFSET=$(echo "$DATA" | cut -d\  -f1)
+      DELAY=$(echo "$DATA" | cut -d\  -f2)
+    fi
+  fi
+  echo "offset.value $OFFSET"
+  echo "delay.value $DELAY"
+}
 
 # ===== NODE CODE =====
 do_list() {
@@ -573,7 +606,7 @@ RES=""
 for PLUG in $PLUGINS
 do 
   if [ "$PLUG" = "if_" ]; then  
-    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\|tap\|br-\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
+    for INTER in $(grep -E '^ *(6in4|ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
     do
       INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/')
       RES="$RES if_$INTERRES"
@@ -581,7 +614,7 @@ do
       eval "config_if_${INTERRES}() { config_if $INTER $@; };"
     done
   elif [ "$PLUG" = "if_err_" ]; then
-    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\|tap\|br-\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
+    for INTER in $(grep -E '^ *(6in4|ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
     do
       INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/')
       RES="$RES if_err_$INTERRES"
