@@ -60,7 +60,6 @@ Conf_Status(){
 
 Conf_Ertek(){
 	echo 'graph_title Power supply(s) values.'
-	id=-2;
 	for i in ${Lista} ; do
 	    for j in ${ERTEKEK} ; do
 		[ ! -e ${PS_DIR}/${i}/${j} ] && continue
@@ -116,7 +115,7 @@ Value_Ertek(){
 				tmp="${tmp}"
 			;;
 			*)
-				tmp="$tmp ERROR"
+				##tmp="$tmp ERROR"
 			;;
 		esac
 		echo "${i}_${j}.value ${tmp}"

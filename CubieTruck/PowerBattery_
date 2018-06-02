@@ -16,7 +16,7 @@ KIZART_ESZKOZOK="/aminemkell/"				#Kellenek a / jelek elötte utánna
 ISMERETLEN_STATUS="Egyeb"
 ##Az ${STATUSOK}-ban lévő(k)-vel megeggyező névvel kell szerepeltetni!!! Kell a "\n" ez az elválasztó!!
 #present="	a: Nincs\n	b: Van"
-status="0: Full\n1: Charging\n2: Discharging\n3: Egyeb."
+status="0: Teli\n1: Tolt\n2: Kisul\n3: stb."
 #health="0: UNKNOWN\n1: Good\n2: OVERHEAT\n3: DEAD\n4: OVERVOLTAGE\n5: UNSPEC_FAILURE\n6: COLD\n6: WATCHDOG_TIMER_EXPIRE\n7: SAFETY_TIMER_EXPIRE"
 health="0: Good\n2: Egyeb."
 
