@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Plugin to monitor APC Power usage. by VolaricsI
-#
-# Usage: Place in /etc/munin/node.d/ (or link it there  using ln -s)
 #
 #	loadpct és timeleft lehet a parameter
 # Created by Voli
@@ -12,7 +10,7 @@ POWER_MIN=16		# A minimális teljesítmény, ez korrekció: hozzáadásra kerül
 POWER_CRIT=110		# Ennyi %-ot tud az UPS teljesitmenyre
 			#Ennel nagyobb ertekek nem lehetnek
 LOADPCT_LIMIT=550	#Ennyit tud az ÉN UPS-em
-TIMELEFT_LIMIT=19	#20 percnél nagyobb áthidalási ido nincs
+TIMELEFT_LIMIT=18	#18 percnél nagyobb áthidalási ido nincs
 
 Mit=loadpct				#	Ha nincs "_valami" akkor ez lessz
 MODEL="MODEL    : "			#	Innen veszi a Tipus meghatározását
@@ -59,16 +57,16 @@ fi
 
 	Mit_Upper=$( echo ${Mit}|tr [a-z] [A-Z] )
 	Ret=$( ${PRG}|grep "^${Mit_Upper}"|sed 's/.*: \+//g; s/ .*//g' )
+	Ret_egesz=$( echo ${Ret}|sed 's/\.//g;' )
 
 	#	az egyedi dimenzionálást itt kell elvégezni.
 	case "${Mit}" in
 		loadpct)
-			Ret=${Ret//./}
-			if [ ".${Ret}" == "." ]; then Ret=0; fi;
-			Ret=$((${Ret}*${POWER_MAX}/1000+${POWER_MIN}))
+			if [ ".${Ret_egesz}" = "." ]; then Ret=0; fi;
+			Ret=$((${Ret_egesz}*${POWER_MAX}/1000+${POWER_MIN}))
 		;;
 		timeleft)
-			if [ ${Ret//.*/} -gt ${TIMELEFT_LIMIT} ]; then
+			if [ ${Ret_egesz} -gt ${TIMELEFT_LIMIT}0 ]; then	## 10-es szorzó
 				Ret=${TIMELEFT_LIMIT}
 			fi
 		;;
