@@ -9,7 +9,7 @@
 #
 # Created by Voli
 
-export  $( grep "^DEV=" /etc/voli-init/voli-myshaper )
+export  $( grep "^DEV=" /etc/voli/init/voli-myshaper )
 
 if [ ".$DEV" = "." ]; then 
 	echo Hiba a DEV értékében....
@@ -17,13 +17,13 @@ if [ ".$DEV" = "." ]; then
 fi
 
 
-Nevesites(){
-	Tmp=$( tc -s class show dev $DEV	|grep -e "class htb" -e "rate"	\
-		|sed 's/root.*//g; s/parent.*//g; s/bit.*//g' )
-	echo ${Tmp}|sed 's/class/\n/g; s/ \+//g; s/:/_/g; '		\
-	|sed 's/htb/htb_/g; s/rate/\.value /g; s/K/000/g; s/M/000000/g'	\
-	|grep "."
-}
+#Nevesites(){
+#	Tmp=$( tc -s class show dev $DEV	|grep -e "class htb" -e "rate"	\
+#		|sed 's/root.*//g; s/parent.*//g; s/bit.*//g' )
+#	echo ${Tmp}|sed 's/class/\n/g; s/ \+//g; s/:/_/g; '		\
+#	|sed 's/htb/htb_/g; s/rate/\.value /g; s/K/000/g; s/M/000000/g'	\
+#	|grep "."
+#}
 
 if [ "$1" = "autoconf" ]; then
 	echo yes
