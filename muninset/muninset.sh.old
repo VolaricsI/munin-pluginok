@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+HELY=/var/lib/munin/volarics.hu
+USER=munin
+GROUP=munin
+#:::::: Beallitasok :::::::::::
+MuninSet=`dirname $0`/muninset
+#:::::: Ellenorzesek ::::::::::
+#:::::: functions :::::::::::::
+
+## $1: rrd file; $2: Max Érték; $3: Ha van akkor erre írja át a $2-t
+Setting(){
+	echo "$1/$2/$3---"
+	cp "${HELY}/$1" "${HELY}/$1.old"
+	rrdtool dump "${HELY}/$1" |${MuninSet} $2 $3 >/tmp/$1
+	rrdtool restore -f /tmp/$1 "${HELY}/$1"
+	chown ${USER}:${GROUP} "${HELY}/$1"
+#	rm -f /tmp/$1
+}
+#:::::: Start :::::::::::::::::
+
+#Setting tu10.volarics.hu-open_inodes-max-g.rrd				110000 110000
+
+#Setting tu10.volarics.hu-NET_class-htb-g.rrd				5000 5000
+
+
+#Setting tu10.volarics.hu-if_eth0-down-c.rrd				3000000
+#Setting tu10.volarics.hu-if_eth0-up-c.rrd				750000
+
+#Setting tu10.volarics.hu-Idokep_legnyomas-Abszolut_legnyomas-g.rrd	2000 999
+#Setting tu10.volarics.hu-Idokep_legnyomas-Relativ_legnyomas-g.rrd	2000 999
+
+Setting tu20.volarics.hu-Idokep_paratartalom-Belso_paratartalom-g.rrd		100	70
+Setting tu20.volarics.hu-Idokep_paratartalom-Relativ_paratartalom-g.rrd		95	70
+
+#Setting tu10.volarics.hu-Idokep_-Belso_homerseklet-g.rrd		20
+Setting tu20.volarics.hu-Idokep_-Kulso_homerseklet-g.rrd		41	15
+
+#Setting tu10.volarics.hu-UPS_timeleft-timeleft-g.rrd			30
+
+#Setting tu10.volarics.hu-sensors_fan-fan4-g.rrd		0		950
+
+#Setting telo.volarics.hu-PowerBattery_capacity_temp-bq2753x_0_temp-g.rrd		200		30
+
+
+exit
+
+tu10.volarics.hu-HDD_Temp-sdj-g.rrd
