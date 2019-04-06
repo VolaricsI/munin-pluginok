@@ -63,10 +63,17 @@ Setting0(){
 #Setting0 	tu20.volarics.hu-Idokep_paratartalom-Relativ_paratartalom-g.rrd	85
 ##Setting0 	tu20.volarics.hu-Idokep_paratartalom-Belso_paratartalom-g.rrd	85
 
-#Setting0	tu20.volarics.hu-Idokep_legnyomas-Relativ_legnyomas-g.rrd	1100
 
-Setting0	tu20.volarics.hu-Idokep_leg-Abszolut_legnyomas-g.rrd	50
-Setting0	tu20.volarics.hu-Idokep_leg-Relativ_legnyomas-g.rrd	50
+#Setting0	tu20.volarics.hu-Idokep_leg-Abszolut_legnyomas-g.rrd	50
+#Setting0	tu20.volarics.hu-Idokep_leg-Relativ_legnyomas-g.rrd	50
+
+Setting0	tu20.volarics.hu-Idokep_legnyomas-Abszolut_legnyomas-g.rrd 	1200
+Setting0	tu20.volarics.hu-Idokep_legnyomas-Relativ_legnyomas-g.rrd 	1200
+
+
+#Setting0	tu20.volarics.hu-rtom__spdd-uprate-g.rrd 	4000
+#Setting0	tu20.volarics.hu-rtom__spdd-downrate-g.rrd 	4000
+
 
 
 echo .........; read a; exit
