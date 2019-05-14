@@ -10,7 +10,7 @@
 # Created by Voli
 
 #Melyik hostokat vizsgálom
-HOST="volaricsi.dyndns.org"
+HOST="volaricsi.duckdns.org"
 
 if [ "$1" = "autoconf" ]; then
 	echo yes;	exit 0
