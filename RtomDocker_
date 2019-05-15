@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# Plugin to monitor docker container
+#
+# Parameters understood: 	Ami az eredeti plugin-ben van
+#		setup : Legyártja az elképzelhető variációkat
+
+#	A docker eléréséhez/használatához kell:
+#
+#	Az "/etc/munin/plugin-conf.d/RtomDocker_" file-ba:
+#
+#	[RtomDocker_*]
+#	user root
+
+# Mivel csak "_" lehet a plugin névben ezért:
+#	Az első és második "_" között van a konténer neve
+#	A második után pedig a konténerben futtatandó plugin neve
+#	ami a /defaults/munin/ könyvtárban kell lenie
+#	pl.: rt_KontenerNeve_PluginNeve, rt_ruTorrent_rtom_mem, ...
+#
+# A használható plugin-eket (ami a container-ben talélható)
+# a "docker exec KonténerNeve ls -lh /defaults/munin" paranccsal tudod lekérdezni
+
+# Created by Voli
+
+## 	Autómaticus setup lehetősége a "setup" paraméterrel
+if [ ".$1" == ".setup" ]; then
+	    ## Hozzáférés a docker-hez
+	echo '[RtomDocker_*]' 	>/etc/munin/plugin-conf.d/RtomDocker_
+	echo 'user root' 	>/etc/munin/plugin-conf.d/RtomDocker_
+
+	    ## Minden konténernek lekérdezzük a nevét, és bennük a /defaults/munin-ban lévők listáját;
+	    ## és mindre legyártjuk a symlink-et
+	Nevem=$( basename $0 )
+	docker container ls --format  {{.Names}} |while read Cont; do
+	    docker exec $Cont ls /defaults/munin 2>/dev/null |while read Plugin; do
+		[ -e /etc/munin/plugins/${Nevem}${Cont}_${Plugin} ] && continue
+		echo /etc/munin/plugins/${Nevem}${Cont}_${Plugin}
+		ln -s ../Build/${Nevem} /etc/munin/plugins/${Nevem}${Cont}_${Plugin}
+	    done
+	done
+fi
+
+#:::::::: Start :::::::::::::::
+
+Kont=$(     basename $0 |cut -d_ -f2 ) 			## A konténer neve
+Pluginrg=$( basename $0 |sed "s/.*${Kont}_//g;" ) 	## A plugin neve
+
+[ -z $Kont ] 	&& exit 1
+[ -z $Plugin ] 	&& exit 2
+
+docker exec $Kont /defaults/munin/$Plugin $*
+
