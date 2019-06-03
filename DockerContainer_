@@ -6,28 +6,27 @@
 #		setup : Legyártja az elképzelhető variációkat
 
 #	A docker eléréséhez/használatához kell:
+#	Az "/etc/munin/plugin-conf.d/DockerContainer_" file-ba:
 #
-#	Az "/etc/munin/plugin-conf.d/RtomDocker_" file-ba:
-#
-#	[RtomDocker_*]
+#	[DockerContainer_*]
 #	user root
 
 # Mivel csak "_" lehet a plugin névben ezért:
 #	Az első és második "_" között van a konténer neve
 #	A második után pedig a konténerben futtatandó plugin neve
 #	ami a /defaults/munin/ könyvtárban kell lenie
-#	pl.: rt_KontenerNeve_PluginNeve, rt_ruTorrent_rtom_mem, ...
+#	pl.: DockerContainer_KontenerNeve_PluginNeve, DockerContainer_ruTorrent_rtom_mem, ...
 #
-# A használható plugin-eket (ami a container-ben talélható)
+# A használható plugin-eket (ami a container-ben található)
 # a "docker exec KonténerNeve ls -lh /defaults/munin" paranccsal tudod lekérdezni
 
 # Created by Voli
 
-## 	Autómaticus setup lehetősége a "setup" paraméterrel
+## 	Autómatikus setup lehetősége a "setup" paraméterrel
 if [ ".$1" == ".setup" ]; then
 	    ## Hozzáférés a docker-hez
-	echo '[RtomDocker_*]' 	>/etc/munin/plugin-conf.d/RtomDocker_
-	echo 'user root' 	>/etc/munin/plugin-conf.d/RtomDocker_
+	echo '[DockerContainer_*]' 	 >/etc/munin/plugin-conf.d/DockerContainer_
+	echo 'user root' 		>>/etc/munin/plugin-conf.d/DockerContainer_
 
 	    ## Minden konténernek lekérdezzük a nevét, és bennük a /defaults/munin-ban lévők listáját;
 	    ## és mindre legyártjuk a symlink-et
@@ -43,11 +42,11 @@ fi
 
 #:::::::: Start :::::::::::::::
 
-Kont=$(     basename $0 |cut -d_ -f2 ) 			## A konténer neve
-Pluginrg=$( basename $0 |sed "s/.*${Kont}_//g;" ) 	## A plugin neve
+MyName=$( basename $0 |cut -d_ -f1 )
+Kont=$(   basename $0 |cut -d_ -f2 ) 				## A konténer neve
+Plugin=$( basename $0 |sed "s/${MyName}_${Kont}_//g;" ) 	## A plugin neve
 
 [ -z $Kont ] 	&& exit 1
 [ -z $Plugin ] 	&& exit 2
 
 docker exec $Kont /defaults/munin/$Plugin $*
-
