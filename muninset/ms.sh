@@ -46,7 +46,7 @@ Nullazo(){
 #	rm -f /tmp/$1
 #}
 
-## $1: rrd file; $2: Max Érték; "NaN"-re írja átt.
+## $1: rrd file; $2: Min Érték; "NaN"-re írja átt.
 Setting0(){
 	echo "$1/$2---"
 	cp "${HELY}/$1" "${HELY}/$1.old"
@@ -55,6 +55,43 @@ Setting0(){
 	chown ${USER}:${GROUP} "${HELY}/$1"
 #	rm -f /tmp/$1
 }
+
+
+MinAlattClear(){
+	while read a; do
+	    echo "${a}"	|	grep "<!-- [0-9 :-]\{19\} [A-X]\+ / [0-9]\+ --> <row><v>.\+</v></row>" -q
+	    if [ $? != 0 ] ; then
+		echo "${a}"
+		continue
+	    fi
+	    Eleje=$( echo ${a}|sed 's/<row><v>.*//g;' )
+	    Szam=$(  echo ${a}|sed 's/.*<row><v>//g; s/<\/v><\/row>.*//g' )
+	    if [ ".${Szam}" == ".NaN" ]; then
+		echo "${a}"
+		continue
+	    fi
+	    Ret=$( calc "$Szam < $1" )
+	    if [ ".${Ret}" == ".0" ]; then
+		echo "${a}"
+		continue
+	    fi
+	    echo "${Eleje}<row><v>NaN</v></row>"
+	done
+}
+
+## $1: rrd file; $2: Max Érték; "NaN"-re írja átt.
+SettingMinAlattClear(){
+	echo "$1/$2---"
+	cp "${HELY}/$1" "${HELY}/$1.old"
+	rrdtool dump "${HELY}/$1" |MinAlattClear $2 >/tmp/$1
+	rrdtool restore -f /tmp/$1 "${HELY}/$1"
+	chown ${USER}:${GROUP} "${HELY}/$1"
+#	rm -f /tmp/$1
+}
+
+
+
+
 
 #:::::: Start :::::::::::::::::
 
@@ -67,14 +104,15 @@ Setting0(){
 #Setting0	tu20.volarics.hu-Idokep_leg-Abszolut_legnyomas-g.rrd	50
 #Setting0	tu20.volarics.hu-Idokep_leg-Relativ_legnyomas-g.rrd	50
 
-Setting0	tu20.volarics.hu-Idokep_legnyomas-Abszolut_legnyomas-g.rrd 	1200
-Setting0	tu20.volarics.hu-Idokep_legnyomas-Relativ_legnyomas-g.rrd 	1200
+#Setting0	tu20.volarics.hu-Idokep_legnyomas-Abszolut_legnyomas-g.rrd 	1200
+#Setting0	tu20.volarics.hu-Idokep_legnyomas-Relativ_legnyomas-g.rrd 	1200
 
 
 #Setting0	tu20.volarics.hu-rtom__spdd-uprate-g.rrd 	4000
 #Setting0	tu20.volarics.hu-rtom__spdd-downrate-g.rrd 	4000
 
-
+SettingMinAlattClear 	tu20.volarics.hu-IdokepAutomata_diff-LogLinesDiff-g.rrd 	151
+SettingMinAlattClear 	tu20.volarics.hu-IdokepAutomata_-LogLines-g.rrd 		151
 
 echo .........; read a; exit
 <!-- 2016-07-24 02:00:00 CEST / 1469318400 --> <row><v>3.2896000000e+01</v></row>
