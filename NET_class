@@ -9,7 +9,8 @@
 #
 # Created by Voli
 
-export  $( grep "^DEV=" /etc/voli/init/voli-myshaper )
+#export  $( grep "^DEV=" /etc/voli/init/voli-myshaper )
+DEV=enp3s0
 
 if [ ".$DEV" = "." ]; then 
 	echo Hiba a DEV értékében....
