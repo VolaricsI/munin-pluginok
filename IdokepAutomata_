@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Plugin to monitor Idokep automata
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+# Created by Voli
+
+HOST_AUTOMATA="IdokepAutomata"
+URL="http://${HOST_AUTOMATA}/cgi-bin/luci/admin/system/dmesg"
+FILE_STORE=/tmp/IdokepAutomataDiff.txt
+Mit="LogLines"
+
+H=$( basename $0|sed 's/.*_//g' )
+if [ ".${H}" != "." ]; then
+    Mit=${Mit}Diff
+fi
+
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then
+	echo yes;	exit 0
+fi
+
+if [ ".$1" = ".config" ]; then
+	echo	'graph_category Idokep'
+#	echo	'graph_args --base 1000'
+	echo	'graph_title Idokep Automata health'
+#	echo	'graph_vlabel Idokep Automata'
+	echo	'graph_info This graph shows the Automata is kernel log lines'
+	echo 	"${Mit}.label Automata dmesg lines"
+    exit 0
+fi
+
+	Current=$( curl -s "${URL}" |grep -c "^\[" )
+
+	[  $Current -eq 0 ] && exit 0
+
+	case $Mit in
+	    LogLines)
+		    Value=$Current;
+		;;
+	    LogLinesDiff)
+		    Old=$( cat $FILE_STORE 2>/dev/null )
+		    echo $Current >$FILE_STORE
+		    Value=$((Current-Old))
+		;;
+	esac
+
+	echo "${Mit}.value $Value"
+
+    exit 0
