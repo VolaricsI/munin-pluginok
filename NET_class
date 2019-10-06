@@ -9,8 +9,8 @@
 #
 # Created by Voli
 
-#export  $( grep "^DEV=" /etc/voli/init/voli-myshaper )
-DEV=enp3s0
+export  $( grep "^DEV=" /etc/voli/voli-myshaper.conf |sed 's/[ \t].*//' )
+#DEV=enp5s0 		#Vagy direktben is megadható
 
 if [ ".$DEV" = "." ]; then 
 	echo Hiba a DEV értékében....
