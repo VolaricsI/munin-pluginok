@@ -7,16 +7,19 @@ HELY=/var/lib/munin/volarics.hu
 USER=munin
 GROUP=munin
 #:::::: Beallitasok :::::::::::
-MuninSet=`dirname $0`/muninset
 #:::::: Ellenorzesek ::::::::::
 #:::::: functions :::::::::::::
 
-calc(){ awk "BEGIN { print $* }"  
+calc(){ awk "BEGIN { print $* }"
 }
-## $1: Max Érték; "NaN" lesz helyette
-Nullazo(){
+
+## $1: Max Érték; X >= $1 akkor $2 lesz 
+MaxFelett(){
+	if [ -z $2 ]; then 	UjErtek=$1
+	else 			UjErtek=$2
+	fi
 	while read a; do
-	    echo "${a}"	|	grep "<!-- [0-9 :-]\{19\} [A-X]\+ / [0-9]\+ --> <row><v>.\+</v></row>" -q
+	    echo "${a}" 	|grep "<!-- [0-9 :-]\{19\} [A-X]\+ / [0-9]\+ --> <row><v>.\+</v></row>" -q
 	    if [ $? != 0 ] ; then
 		echo "${a}"
 		continue
@@ -32,32 +35,11 @@ Nullazo(){
 		echo "${a}"
 		continue
 	    fi
-	    echo "${Eleje}<row><v>NaN</v></row>"
+	    echo "${Eleje}<row><v>${UjErtek}</v></row>"
 	done
 }
 
-## $1: rrd file; $2: Max Érték; $3: Ha van akkor erre írja át a $2-t
-#Setting(){
-#	echo "$1/$2/$3---"
-#	cp "${HELY}/$1" "${HELY}/$1.old"
-#	rrdtool dump "${HELY}/$1" |${MuninSet} $2 $3 >/tmp/$1
-#	rrdtool restore -f /tmp/$1 "${HELY}/$1"
-#	chown ${USER}:${GROUP} "${HELY}/$1"
-#	rm -f /tmp/$1
-#}
-
-## $1: rrd file; $2: Min Érték; "NaN"-re írja átt.
-Setting0(){
-	echo "$1/$2---"
-	cp "${HELY}/$1" "${HELY}/$1.old"
-	rrdtool dump "${HELY}/$1" |Nullazo $2 >/tmp/$1
-	rrdtool restore -f /tmp/$1 "${HELY}/$1"
-	chown ${USER}:${GROUP} "${HELY}/$1"
-#	rm -f /tmp/$1
-}
-
-
-MinAlattClear(){
+MinAlatt(){
 	while read a; do
 	    echo "${a}"	|	grep "<!-- [0-9 :-]\{19\} [A-X]\+ / [0-9]\+ --> <row><v>.\+</v></row>" -q
 	    if [ $? != 0 ] ; then
@@ -70,7 +52,7 @@ MinAlattClear(){
 		echo "${a}"
 		continue
 	    fi
-	    Ret=$( calc "$Szam < $1" )
+	    Ret=$( calc "$Szam <= $1" )
 	    if [ ".${Ret}" == ".0" ]; then
 		echo "${a}"
 		continue
@@ -79,41 +61,44 @@ MinAlattClear(){
 	done
 }
 
-## $1: rrd file; $2: Max Érték; "NaN"-re írja átt.
-SettingMinAlattClear(){
-	echo "$1/$2---"
+
+## $1: rrd file; $2: Akcio;  $3: Határ Érték; $4: új érték
+Setting(){
+	echo "$1	/$2	/$3/$4---"
 	cp "${HELY}/$1" "${HELY}/$1.old"
-	rrdtool dump "${HELY}/$1" |MinAlattClear $2 >/tmp/$1
+	rrdtool dump "${HELY}/$1" |$2 $3 $4 >/tmp/$1
 	rrdtool restore -f /tmp/$1 "${HELY}/$1"
 	chown ${USER}:${GROUP} "${HELY}/$1"
-#	rm -f /tmp/$1
+	rm -f /tmp/$1
+}
+
+## $1: rrd file minta; $2: Akcio;  $3: Határ Érték; $4: új érték
+Cikl(){
+    find ${HELY} |grep -v ".old$" |grep "$1" |sort |while read a; do
+	fname=$( basename $a )
+#	Setting $fname 	MaxFelett 	1000 NaN
+	Setting $fname 	$2 	$3 $4
+    done
 }
 
 
 
-
-
 #:::::: Start :::::::::::::::::
+#
+#Cikl 'tu20.volarics.hu-*diskstats_utilization*' 	MaxFelett 	1000 NaN
+#Cikl 'tu20.volarics.hu-*diskstats_throughput*' 	MaxFelett 	1000000000 NaN
 
-##Setting0	tu20.volarics.hu-Idokep_-Kulso_homerseklet-g.rrd		40
+#SettingMaxFelettMax 	tu20.volarics.hu-diskstats_throughput-md126_rdbytes-g.rrd 	500000000
+#SettingMaxFelettMax 	tu20.volarics.hu-diskstats_throughput-md126_wrbytes-g.rrd 	500000000
 
-#Setting0 	tu20.volarics.hu-Idokep_paratartalom-Relativ_paratartalom-g.rrd	85
-##Setting0 	tu20.volarics.hu-Idokep_paratartalom-Belso_paratartalom-g.rrd	85
+#Setting tu20.volarics.hu-diskstats_throughput-md126_rdbytes-g.rrd 	MaxFelett 	450.000.000 #NaN
+#Setting tu20.volarics.hu-diskstats_throughput-md126_wrbytes-g.rrd 	MaxFelett 	450000000 #NaN
+#Setting tu20.volarics.hu-diskstats_throughput-md126-rdbytes-g.rrd 	MaxFelett 	450000000 #NaN
+#Setting tu20.volarics.hu-diskstats_throughput-md126-wrbytes-g.rrd 	MaxFelett 	450000000 #NaN
 
-
-#Setting0	tu20.volarics.hu-Idokep_leg-Abszolut_legnyomas-g.rrd	50
-#Setting0	tu20.volarics.hu-Idokep_leg-Relativ_legnyomas-g.rrd	50
-
-#Setting0	tu20.volarics.hu-Idokep_legnyomas-Abszolut_legnyomas-g.rrd 	1200
-#Setting0	tu20.volarics.hu-Idokep_legnyomas-Relativ_legnyomas-g.rrd 	1200
+Setting 	tu20.volarics.hu-threads-threads-g.rrd 	MaxFelett 	2e3 NaN
 
 
-#Setting0	tu20.volarics.hu-rtom__spdd-uprate-g.rrd 	4000
-#Setting0	tu20.volarics.hu-rtom__spdd-downrate-g.rrd 	4000
 
-SettingMinAlattClear 	tu20.volarics.hu-IdokepAutomata_diff-LogLinesDiff-g.rrd 	151
-SettingMinAlattClear 	tu20.volarics.hu-IdokepAutomata_-LogLines-g.rrd 		151
 
 echo .........; read a; exit
-<!-- 2016-07-24 02:00:00 CEST / 1469318400 --> <row><v>3.2896000000e+01</v></row>
-<!-- 2016-07-25 02:00:00 CEST / 1469404800 --> <row><v>NaN</v></row>
