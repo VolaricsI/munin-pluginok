@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Plugin to boinc by VolaricsI
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+#	Create by Voli
+
+LIST_STATUS="EXECUTING SUSPENDED UNINITIALIZED"
+SOR_STATUS="active_task_state:"
+
+
+if [ "$1" = "autoconf" ]; then
+	echo yes
+fi
+
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category boinc'
+	echo 'graph_title boinc task'
+	echo 'graph_vlabel Boinc job status [db]'
+	echo 'graph_info This graph shows status boinc jobs.'
+	    for st in $LIST_STATUS ; do
+		echo "$st.label A job statusza $st."
+	    done
+	exit 0
+fi
+
+
+    List=$(  boinccmd   --get_tasks |grep -e "$SOR_STATUS" )
+    for st in $LIST_STATUS ; do
+	echo -n "$st.value "
+	echo "$List" |grep -c "$st"
+    done

@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Plugin to boinc by VolaricsI
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+#	Create by Voli
+
+SOR_COUNT=") -----------"
+VALUE_0=current
+VALUE_1=remaining
+
+Value(){				## $1: Job sorszáma; $2: Az idő megnevezése;  $3: Ebben a sorban keres
+	echo "$3" |grep $2 >/dev/null
+	[ $? -ne 0 ] && return
+	value=$[ $( echo "$3" |sed "s/.*://; s/\.[0-9].*// " )/60 ]
+	echo "$2$1.value $value"
+}
+
+
+if [ "$1" = "autoconf" ]; then
+	echo yes
+fi
+
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category boinc'
+	echo 'graph_title boinc task time'
+	echo 'graph_vlabel Boinc job time  [perc]'
+	echo 'graph_info This graph shows time of boinc jobs.'
+		boinccmd --get_tasks |grep -e "$SOR_COUNT" |sed "s/$SOR_COUNT//; s/ *//" |while read cnt; do
+			echo "$VALUE_0$cnt.label job $cnt $VALUE_0 time"
+			echo "$VALUE_1$cnt.label job $cnt $VALUE_1 time"
+		done
+	exit 0
+fi
+
+
+boinccmd --get_tasks |grep -e "$SOR_COUNT" -e "$VALUE_0" -e "$VALUE_1" |while read line; do
+	cnt=$( echo $line |grep -e "$SOR_COUNT" |sed "s/$SOR_COUNT//" )
+	[ -n "$cnt" ] && count=$cnt
+	Value $count "$VALUE_0" "$line"
+	Value $count "$VALUE_1" "$line"
+done
