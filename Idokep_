@@ -10,7 +10,7 @@
 # Created by Voli
 
 #HOST="192.168.0.90"
-HOST="idokep_automata"
+HOST="idokep-automata"
 
 URL="http://${HOST}/cgi-bin/luci/admin/status/automata/"
 
