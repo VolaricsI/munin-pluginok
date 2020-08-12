@@ -44,7 +44,7 @@ if [ "$1" = "config" ]; then
 	echo 'graph_vlabel CPU speed [Hz]'
 	echo 'graph_info This graph shows how CPU speed.'
 	for i in $Policyk ; do
-		echo "$i.label A frekvencia policy min/max $( EchoFreq $POLICY_DIR/$i/$FRQ_MIN)/$( EchoFreq $POLICY_DIR/$i/$FRQ_MAX)."
+		echo "$i.label A policy min/max $( EchoFreq $POLICY_DIR/$i/$FRQ_MIN)/$( EchoFreq $POLICY_DIR/$i/$FRQ_MAX)."
 	done
 	exit 0
 fi
