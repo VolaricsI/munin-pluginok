@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# Plugin to monitor CPU speed.by VolaricsI
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+
+#	Create by Voli
+#	Sebesség sorrendjében van a kiírtás.
+
+POLICY_DIR=/sys/devices/system/cpu/cpufreq/
+FRQ_AKTUALIS=cpuinfo_cur_freq
+FRQ_MIN=cpuinfo_min_freq
+FRQ_MAX=cpuinfo_max_freq
+
+EchoFreq(){
+    cat $1|sed 's|000$||; s|\(.\+\)\(.\{3\}\)$|\1.\2|; s|\(.\+\..\)..|\1GHz|; s|^\(.\{3\}$\)|\1MHz|'
+}
+
+#Milyen frekvencia csoportok vannak a gépen
+	Policyk=""
+	for a in $( ls $POLICY_DIR|grep "^policy" ) ; do
+		if [ ! -d "$POLICY_DIR/$a" ]; then continue; fi
+		Policyk="$Policyk $a"
+	done
+
+
+if [ "$1" = "autoconf" ]; then
+	for i in ${Policyk}; do
+	    if [ ! -e "$POLICY_DIR/$i/$FRQ_AKTUALIS" ]; then
+		echo no; exit 1
+	    fi
+	done
+	echo yes; exit 0
+fi
+
+
+if [ "$1" = "config" ]; then
+	echo 'graph_category system'
+	echo 'graph_title CPU groups(s) speed'
+	echo 'graph_vlabel CPU speed [Hz]'
+	echo 'graph_info This graph shows how CPU speed.'
+	for i in $Policyk ; do
+		echo "$i.label A frekvencia policy min/max $( EchoFreq $POLICY_DIR/$i/$FRQ_MIN)/$( EchoFreq $POLICY_DIR/$i/$FRQ_MAX)."
+	done
+	exit 0
+fi
+
+
+	for i in ${Policyk}; do
+		echo -n "${i}.value "
+		cat $POLICY_DIR/$i/$FRQ_AKTUALIS
+	done
+exit 0
