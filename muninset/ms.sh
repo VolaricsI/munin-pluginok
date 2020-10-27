@@ -71,6 +71,9 @@ Cikl(){
 #Cikl 'tu20.volarics.hu-*diskstats_utilization*' 		100 felett 	NaN
 #Cikl 'tu20.volarics.hu-*diskstats_throughput*' 		1e9 felett 	NaN
 
+Cikl 'tu20.volarics.hu-*diskstats_throughput-sdn-*' 		1e9 felett 	NaN
+
+
 #Setting 	tu20.volarics.hu-processes-zombie-g.rrd 	100 felett NaN
 
 #Setting 	tu20.volarics.hu-sensors_fan-fan5-g.rrd 	2000 felett NaN
