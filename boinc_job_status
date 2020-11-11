@@ -36,3 +36,4 @@ fi
 	echo -n "$st.value "
 	echo "$List" |grep -c "$st"
     done
+exit 0
