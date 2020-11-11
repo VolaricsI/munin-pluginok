@@ -2,11 +2,13 @@
 # Simple Bourne Shell script that implements Munin protocoll and 
 # some common Linux plugins.
 
-config_wifi(){
-  echo "graph_title WiFi kapcsolodas"
-  echo "graph_vlabel A WiFi-re csatlakozas idotartama"
-  echo "graph_category Voli"
-echo "graph_args --upper-limit 180 --rigid "
+ISMERETLEN="Nincs neve"
+
+if [ .$1 = .config ]; then
+    echo "graph_title WiFi kapcsolodas"
+    echo "graph_vlabel A WiFi-re csatlakozas idotartama"
+    echo "graph_category Voli"
+    echo "graph_args --upper-limit 180 --rigid "
 	##Static DHCP nevek
 	List0=" $( grep "dhcp-host=" /var/etc/dnsmasq.conf |sed 's/dhcp-host=//g; s/,.*//g; ' ) "
 
@@ -24,29 +26,21 @@ echo "graph_args --upper-limit 180 --rigid "
 	done |sort -u -m \
 		|while read a; do
 			Neve=$( grep "${a}" /var/etc/dnsmasq.conf|sed 's/.*,//g; ' )	#Static DHCP-ben a neve
-			if [ -z ${Neve} ]; then
-			   Neve=$( grep "${a}" /var/dhcp.leases |sed 's/^[0-9]\+ [0-9a-f:]\+ [0-9.]\+ //g; s/ .\+//g;' ) #DHCP-ben milyen nevet mondott
+			if [ -z "$Neve" ]; then
+			   Neve=$( grep "${a}" /var/dhcp.leases |sed "s/^[0-9]\+ [0-9a-f:]\+ [0-9.]\+ //g; s/ .\+//g; s/*/$ISMERETLEN/" ) 	#DHCP-ben milyen nevet mondott
 			fi
-			if [ -z ${Neve} ]; then Neve=${a}; fi
+			if [ -z "$Neve" ]; then Neve="$a"; fi
 			echo V${a}.label ${Neve} |sed 's/://g;'
 		done;
-}
-
-if [ ".$1" = ".config" ]; then
-	config_wifi
-	exit
+    exit
 fi
 
 for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
-
     iw $i station dump|grep -e "Station" -e "connected time:" |sed 's/Station//g; s/connected time://g; '
-done |sed 's/^ *//g; s/ .*//g; ' |while read a; do
-	read b;
-	if [ -z ${b} ]; then continue; fi
-	echo -n "V${a}.value " |sed 's/://g;'
-#	echo $((${b}/60))
-	b=$((${b}/60))
-#	[ ${b} -gt 300 ] && b=300
-	echo ${b}
-done
-
+done |sed 's/^ *//g; s/ .*//g; ' \
+	|while read a; do
+		read b;
+		if [ -z "$b" ]; then continue; fi
+		echo -n "V${a}.value " |sed 's/://g;'
+		echo $(($b/60))
+	done
