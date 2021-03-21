@@ -1,0 +1,2 @@
+https://github.com/munin-monitoring/munin
+https://raw.githubusercontent.com/munin-monitoring/munin/master/plugins/node.d/fail2ban
