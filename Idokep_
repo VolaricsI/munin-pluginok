@@ -9,40 +9,33 @@
 #
 # Created by Voli
 
-#HOST="192.168.0.90"
 HOST="idokep-automata"
 
-URL="http://${HOST}/cgi-bin/luci/admin/status/automata/"
+URL="http://$HOST/cgi-bin/luci/admin/status/automata/"
 
-ADATLAP=/tmp/Idokep_	#Ide kerül a szürt kiolvasás
-Mit="homerseklet"	#Meg ezeket tudja: homerseklet; paratartalom; legnyomas; Csapadek; _szel;
+Mit="homerseklet"	#Még ezeket tudja: homerseklet; paratartalom; legnyomas; Csapadek; _szel;
 
 function GetMit(){
-	wget -t 1 -T 5 -nv -o /dev/null -O -  "${URL}" \
+	curl -s -t 1 --max-time 5  "${URL}" \
 	|sgrep '"<h2>WS23XX m&eacute;rt adatai</h2> " .. "<h2>TE923/TE823 m&eacute;rt adatai</h2>"' 	|grep -v -e "^<.*> *$" -e "^$"|sed 's/<pre>//g; ' \
 	|grep "${Mit}"
-#	|grep "${Mit}" 	>${ADATLAP}
 }
 
 
 #:::::: Start :::::::::::::::::
-if [ "$1" = "autoconf" ]; then
-	echo yes;	exit 0
-fi
+if [ .$1 = .autoconf ]; then echo yes; exit 0; fi
 
 H=$( basename $0|sed 's/.*_//g' )
-if [ ".${H}" != "." ]; then
-	Mit=${H}
-fi
+if [ .$H != . ]; then Mit=${H}; fi
 
 
-if [ ".$1" = ".config" ]; then
+if [ .$1 = .config ]; then
 	echo	'graph_category Idokep'
 	echo	'graph_args --base 1000'
-	echo	"graph_title Idokep ${Mit}"
-	echo	"graph_vlabel Idokep ${Mit}"
-	echo	"graph_info This graph shows the ${Mit}"
-	case "${Mit}" in
+	echo	"graph_title Idokep $Mit"
+	echo	"graph_vlabel Idokep $Mit"
+	echo	"graph_info This graph shows the $Mit"
+	case $Mit in
 		legnyomas)
 			echo "graph_args --upper-limit 1050 --lower-limit 950"
 		;;
@@ -54,16 +47,16 @@ if [ ".$1" = ".config" ]; then
 		;;
 	esac
 	GetMit 	|sed 's/=.*//g' |while read a; do
-		echo "${a}.label ${a}"
+		echo "$a.label $a"
 	done
 	exit 0
 fi
 
 	GetMit 	|sed 's/=/.value /g; ' |while read a; do
 	    Ertek=$( echo "${a}" |sed 's/.* //g' )
-	    [ "${Mit}" = "paratartalom" ] && [ ${Ertek} -gt 100 ] && continue;					## 100%-nál nincs nagyobb, legalábbis nálunk
-	    [ "${Mit}" = "homerseklet"  ] && [ ".${Ertek}" = ".81.0" ] && continue;				##Ez a külső hőmérséklet, ha nincs kapcsolat a kültérivel
-	    [ "${Mit}" = "homerseklet"  ] && [ $( echo "${Ertek}"|sed 's/\.//g' ) -gt 450 ] && continue;	##45.0 --> 450 nincs nagyobb hőmérséklet
-	    echo "${a}"
+	    [ "$Mit" = paratartalom ] && [ "$Ertek" -gt 100 ] && continue;				## 100%-nál nincs nagyobb, legalábbis nálunk
+	    [ "$Mit" = homerseklet  ] && [ ".$Ertek" = .81.0 ] && continue;				##Ez a külső hőmérséklet, ha nincs kapcsolat a kültérivel
+	    [ "$Mit" = homerseklet  ] && [ $( echo "$Ertek"|sed 's/\.//g' ) -gt 450 ] && continue;	##45.0 --> 450 nincs nagyobb hőmérséklet
+	    echo "$a"
 	done
 	exit 0
