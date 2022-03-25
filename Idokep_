@@ -15,10 +15,13 @@ URL="http://$HOST/cgi-bin/luci/admin/status/automata/"
 
 Mit="homerseklet"	#Még ezeket tudja: homerseklet; paratartalom; legnyomas; Csapadek; _szel;
 
-function GetMit(){
+function GetMind(){
 	curl -s -t 1 --max-time 5  "${URL}" \
-	|sgrep '"<h2>WS23XX m&eacute;rt adatai</h2> " .. "<h2>TE923/TE823 m&eacute;rt adatai</h2>"' 	|grep -v -e "^<.*> *$" -e "^$"|sed 's/<pre>//g; ' \
-	|grep "${Mit}"
+	|sgrep '"<h2>WS23XX m&eacute;rt adatai</h2> " .. "<h2>TE923/TE823 m&eacute;rt adatai</h2>"' 	|grep -v -e "^<.*> *$" -e "^$"|sed 's/<pre>//g; '
+}
+
+function GetMit(){
+	GetMind |grep "${Mit}"
 }
 
 

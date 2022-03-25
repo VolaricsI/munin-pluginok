@@ -73,7 +73,19 @@ Cikl(){
 
 #Cikl 'tu20.volarics.hu-*diskstats_throughput-sdn-*' 		1e9 felett 	NaN
 
-Cikl 'tu20.volarics.hu-Sensors_fan-fan*'		 	2000 felett NaN
+#Cikl 'tu20.volarics.hu-Sensors_fan-fan*'		 	2000 felett NaN
+#Cikl 'tu20.volarics.hu-sensors_fan-fan*'		 	2000 felett NaN
+
+###	EVSE
+#Setting 	arhiv-bp.volarics.hu-EVSE-status_EVSE-g.rrd 		30 felett NaN
+#Setting 	arhiv-bp.volarics.hu-EVSE-settings_amps-g.rrd 		32 felett NaN
+#Setting 	arhiv-bp.volarics.hu-EVSE-status_cable-g.rrd 		 2 felett NaN
+#Setting 	arhiv-bp.volarics.hu-EVSE-status_pilot-g.rrd 		 0 alatt  NaN
+#Setting 	arhiv-bp.volarics.hu-EVSE-session_time-g.rrd 		240 felett NaN
+#Setting 	arhiv-bp.volarics.hu-EVSE-temp2-g.rrd 			40 felett NaN
+#Setting 	arhiv-bp.volarics.hu-EVSE-energy_total-g.rrd 		40 felett NaN
+Setting 	arhiv-bp.volarics.hu-ShellyMotion-lux_value-g.rrd 	10000 felett NaN
+
 
 #Setting 	tu20.volarics.hu-processes-zombie-g.rrd 	100 felett NaN
 
@@ -89,10 +101,20 @@ Cikl 'tu20.volarics.hu-Sensors_fan-fan*'		 	2000 felett NaN
 
 #Setting 	tu20.volarics.hu-docker_memory-rTorrent-g.rrd 	5e9 felett NaN
 
+#Setting 	tu20.volarics.hu-sensors_temp-temp3-g.rrd 	23 alatt NaN
 #Setting 	tu20.volarics.hu-sensors_temp-temp4-g.rrd 	23 alatt NaN
 #Setting 	tu20.volarics.hu-sensors_temp-temp5-g.rrd 	23 alatt NaN
 #Setting 	tu20.volarics.hu-sensors_temp-temp6-g.rrd 	23 alatt NaN
+#Setting 	tu20.volarics.hu-sensors_temp-temp7-g.rrd 	23 alatt NaN
 #Setting 	tu20.volarics.hu-sensors_temp-temp8-g.rrd 	23 alatt NaN
+#Setting 	tu20.volarics.hu-sensors_temp-temp9-g.rrd 	23 alatt NaN
+
+#Setting 	tu20.volarics.hu-Sensors_temp-temp5-g.rrd 	23 alatt NaN
+#Setting 	tu20.volarics.hu-Sensors_temp-temp6-g.rrd 	23 alatt NaN
+
+#Setting 	tu20.volarics.hu-Sensors_volt-volt5-g.rrd 	6 alatt NaN
+#Setting 	tu20.volarics.hu-Sensors_volt-volt11-g.rrd 	4 alatt NaN
+#Setting 	tu20.volarics.hu-Sensors_volt-volt4-g.rrd 	4 felett NaN
 
 #Setting tu20.volarics.hu-diskstats_throughput-md126_rdbytes-g.rrd 	MaxFelett 	450.000.000 #NaN
 #Setting tu20.volarics.hu-diskstats_throughput-md126_wrbytes-g.rrd 	MaxFelett 	450000000 #NaN

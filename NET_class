@@ -9,11 +9,12 @@
 #
 # Created by Voli
 
-export  $( grep "^DEV=" /etc/voli-env/voli-myshaper.conf |sed 's/[ \t].*//' )
+export  $( grep "^DEV=" /etc/voli/myshaper.conf |sed 's/[ \t].*//' )
 #DEV=enp5s0 		#Vagy direktben is megadható
 
 if [ ".$DEV" = "." ]; then 
 	echo Hiba a DEV értékében....
+	logger -t MUNIN "A $0 plugin-ben: Hiba a DEV értékében...."
 	exit 1
 fi
 
