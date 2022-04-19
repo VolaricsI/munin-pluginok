@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+def_ip=192.168.0.41
+#:::::: Beallitasok :::::::::::
+#ignore='lux_is_valid'
+    [ -z "$ignore" ] && ignore=URES
+#:::::: functions :::::::::::::
+ConfField(){
+    eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+			echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+Bool(){
+    [ "$2" == "true"  ] && echo "$1.value 1"
+    [ "$2" == "false" ] && echo "$1.value 0"
+}
+Kiir(){
+	[ -z "$2" ] && return
+	eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+	case $1 in
+	    lux_value|bat_value|bat_voltage)							echo $1.value $2	;;
+	    lux_is_valid|sensor_vibration|sensor_motion|sensor_active|sensor_is_valid|bat_charger) 	Bool $1 $2	;;
+	    lux_illumination) 	case $2 in
+					dark)		echo $1.value 0	;;
+					twilight)	echo $1.value 1	;;
+					bright)		echo $1.value 2	;;
+				esac
+	esac
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
+	echo	"graph_title ${title:-Shelly Motion sensor}"
+	echo	"graph_vlabel ${vlabel:-Shelly Motion}"
+	echo	"graph_category ${category:-Shelly}"
+	ConfField	lux_value		"Illumination"		"Illumination measure by the sensor in lux"
+	ConfField	"lux_illumination	"Illumination type"	"One of 0:dark, 1:twilight, 2:bright"
+	ConfField	lux_is_valid		"Lux is valid"		"Whether lux sensor self-checks OK: 1"
+	ConfField	sensor_vibration	"Tamper"		"Tamper (vibration) has been detected. Cleared after vibration has gone"
+	ConfField	sensor_motion		"Motion detected"	"Motion has been detected and the sensor blind time has not elapsed: 1"
+	ConfField	sensor_active		"Motion detection"	"Whether motion detection is active: 1"
+	ConfField	sensor_is_valid		"Sensor is valid"	"Whether motion sensor self-checks OK: 1"
+	ConfField	bat_value		"Battery charge"	"Battery charge in percent [%]"
+	ConfField	bat_voltage		"Battery voltage"	"Measured battery voltage"
+	ConfField	bat_charger		"Charger connected"	"Whether a charger connected"
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	Result=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/status |sed 's|"||g; s|}||g; s|{||g; s|.*lux:|lux:|; s|update:.*||'  )
+	[ -z "$Result" ] && exit 1
+	echo "$Result" |sed 's|.*lux:||; s|sensor:.*||; s|,|\n|g; ' |while read a; do			## Lux
+	    IFS=':' read -r -a tmp <<< "$a";
+	    Kiir lux_${tmp[0]} ${tmp[1]}
+	done
+	echo "$Result" |sed 's|.*sensor:||; s|bat:.*||; s|,|\n|g; ' |while read a; do			## sensor
+	    IFS=':' read -r -a tmp <<< "$a";
+	    Kiir sensor_${tmp[0]} ${tmp[1]}
+	done
+	echo "$Result" |sed 's|.*bat:||; s|,|\n|g; ' |while read a; do					## battery
+	    IFS=':' read -r -a tmp <<< "$a";
+	    Kiir bat_${tmp[0]} ${tmp[1]}
+	done
+exit 0

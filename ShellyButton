@@ -1,0 +1,71 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+def_ip=192.168.0.14
+#:::::: Beallitasok :::::::::::
+#ignore='voltage|sensor_error'
+    [ -z "$ignore" ] && ignore=URES
+#:::::: functions :::::::::::::
+ConfField(){
+    eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+			echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+Bool(){
+    [ "$2" == "true"  ] && echo "$1.value 1"
+    [ "$2" == "false" ] && echo "$1.value 0"
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
+	echo	"graph_title ${title:-Shelly Button1}"
+	echo	"graph_vlabel ${vlabel:-Shelly Button}"
+	echo	"graph_category ${category:-Shelly}"
+	echo	"event.label 		Input event"
+	echo	"event.info 		Input event, 0:shortpush, 1:double shortpush, 2:triple shortpush, 3:longpush"
+	echo	"event_cnt.label 	Input event counter"
+	echo	"event_cnt.info 	Input event counter, uint32, stored in RTC memory when device goes to sleep"
+	echo	"is_valid.label 	self-checks OK"
+	echo	"is_valid.info 		Whether button self-checks OK:1"
+	echo	"voltage.label 		Battery voltage"
+	echo	"voltage.info 		Battery voltage [V]"
+	echo	"charger.label 		External power is"
+	echo	"charger.info 		Whether external power is available: 1"
+	echo	"act_reasons.label 	To which awoke"
+	echo	"act_reasons.info 	List of reasons which woke up the device: 0:battery, 1:button, 2:periodic, 3:poweron, 4:sensor, 5:ext_power"
+	echo	"sensor_error.label 	Sensor error"
+	echo	"sensor_error.info 	Only displayed in case of error"
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	Result=$( curl -s --connect-timeout 3 http://${address:-${def_ip}}/status |sed 's|[,{]|\n|g; s|[]["}]||g;' )
+	[ -z "$Result" ] && exit 1
+	echo "$Result" |while read a; do
+	    IFS=':' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+		case ${tmp[0]} in
+		    event)	case ${tmp[1]} in
+					S)	echo "${tmp[0]}.value 0"	;;
+					SS)	echo "${tmp[0]}.value 1"	;;
+					SSS)	echo "${tmp[0]}.value 2"	;;
+					L)	echo "${tmp[0]}.value 3"	;;
+				esac	;;
+		    act_reasons)	case ${tmp[1]} in
+					battery)	echo "${tmp[0]}.value 0"	;;
+					button)		echo "${tmp[0]}.value 1"	;;
+					periodic)	echo "${tmp[0]}.value 2"	;;
+					poweron)	echo "${tmp[0]}.value 3"	;;
+					sensor)		echo "${tmp[0]}.value 4"	;;
+					ext_power)	echo "${tmp[0]}.value 5"	;;
+				esac	;;
+		    event_cnt|value|voltage|sensor_error)	echo "${tmp[0]}.value ${tmp[1]}"	;;
+		    is_valid|charger)				Bool ${tmp[0]} ${tmp[1]}		;;
+		esac
+	done
+exit 0

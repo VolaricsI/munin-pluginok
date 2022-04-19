@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+def_ip=192.168.0.46
+#:::::: Beallitasok :::::::::::
+#ignore='total|temp'
+    [ -z "$ignore" ] && ignore=URES
+#:::::: functions :::::::::::::
+ConfField(){
+    eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+			echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+Bool(){
+    [ "$2" == "true"  ] && echo "$1.value 1"
+    [ "$2" == "false" ] && echo "$1.value 0"
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
+	echo	"graph_title ${title:-Shelly BULB color light}"
+	echo	"graph_vlabel ${vlabel:-Shelly BULB}"
+	echo	"graph_category ${category:-Shelly}"
+	echo	"ison.label 		Channel is turned"
+	echo	"ison.info 		Whether the channel is turned 1:ON / 0:OFF"
+	echo	"has_timer.label 	Timer is armed"
+	echo	"has_timer.info 	Whether a timer is currently armed for this channel: 1"
+	echo	"mode.label 		Configured mode"
+	echo	"mode.info 		Currently configured mode: 0:white or 1:color"
+	echo	"red.label 		Red brightness"
+	echo	"red.info 		Red brightness, 0..255, applies in mode=color"
+	echo	"green.label 		Green brightness"
+	echo	"green.info 		Green brightness, 0..255, applies in mode=color"
+	echo	"blue.label 		Blue brightness"
+	echo	"blue.info 		Blue brightness, 0..255, applies in mode=color"
+	echo	"white.label 		White"
+	echo	"white.info 		White level, 0..100"
+	echo	"gain.label 		Gain"
+	echo	"gain.info 		Gain for all channels, 0..100, applies in mode=color"
+	echo	"brightness.label 	Brightness"
+	echo	"brightness.info 	Brightness, 0..100"
+	echo	"temp.label 		Color temperature"
+	echo	"temp.info 		Color temperature in K, 3000..6500, applies in mode=white"
+	echo	"power.label 		Power [W]"
+	echo	"power.info 		Consumed power [W]"
+	echo	"total.label 		Energy consumed [Wh]"
+	echo	"total.info 		Total energy consumed by the attached electrical appliance in Watt-hour"
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	Result=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/status  |sed 's|"||g; s|,|\n|g; s|\[{|\n|g; s|}\]||g' )
+	[ -z "$Result" ] && exit 1
+	echo "$Result" |while read a; do
+	    IFS=':' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+		case ${tmp[0]} in
+		    mode)	case ${tmp[0]} in
+					white) echo ${tmp[0]}.value 0	;;
+					color) echo ${tmp[0]}.value 1	;;
+				esac 	;;
+		    ison|has_timer)	Bool ${tmp[0]} ${tmp[1]}		;;
+		    total)		echo "${tmp[0]}.value $( bc <<< "scale=2; ${tmp[1]}/60")"	;;
+		    brightness|red|green|blue|white|gain|temp|power)	echo "${tmp[0]}.value ${tmp[1]}"	;;
+		esac
+	done
+exit 0

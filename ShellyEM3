@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+#	Create by Voli
+#
+
+#:::::: Fix beallitasok :::::::
+def_ip=192.168.0.31
+#:::::: Beallitasok :::::::::::
+#ignore=' total|total_returned|overpower|voltage '
+	[ -z "$ignore" ] && ignore=URES
+#:::::: functions :::::::::::::
+ConfField(){
+    eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+			echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+CsatornakConfig(){
+	Name=${2:-L$1}
+	for field in power pf current voltage is_valid total total_returned; do
+		eval "case \"${field}\" in $ignore) continue ;; esac"	## Ignore field
+		case $field in
+			current)	echo "L$1_current.label	$Name: Current [A]"	;;
+			voltage)	echo "L$1_voltage.label	$Name: RMS voltage [V]"	;;
+			power)		ConfField	L$1_power		"$Name: Power [kW]"		"$Name: Instantaneous power [kW]"	;;
+			pf)		ConfField	L$1_pf			"$Name: Power factor"		"$Name: Power factor (dimensionless)"	;;
+			is_valid)	ConfField	"L$1_is_valid		"$Name: Functioning properly"	"$Name: Meter is functioning property: 1";;
+			total)		ConfField	"L$1_total		"$Name: Consumed energy [Wh]"	"$Name: Total consumed energy [Wh]"	;;
+			total_returned)	ConfField	L$1_total_returned	"$Name: Returned energy [Wh]"	"$Name: Total returned energy [Wh]"	;;
+		esac
+	done
+}
+Bool(){
+    [ "$2" == "true"  ] && echo "$1.value 1"
+    [ "$2" == "false" ] && echo "$1.value 0"
+}
+Csatornak(){
+    echo $2 |sed ' s|,|\n|g' |while read a; do
+	    IFS=':' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+		case "${tmp[0]}" in
+		    ""		)						;;
+		    is_valid	)	Bool L$1_${tmp[0]} 	 ${tmp[1]}	;;
+		    power	)	echo L$1_${tmp[0]}.value $( bc <<< "scale=4; ${tmp[1]}/1000")	;;
+		    *		)	echo L$1_${tmp[0]}.value ${tmp[1]}	;;
+		esac
+    done
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
+	echo	"graph_title ${title:-Shelly EM3 power meter}"
+	echo	"graph_vlabel ${vlabel:-Shelly EM3}"
+	echo	"graph_category ${category:-Shelly}"
+	ConfField	total_power	"Sum of the power [kW]"		"Sum of the power of the three channels [kW]"
+	ConfField	relay_ison	"Status of relay"		"Relay whether the channel is turned 1:ON or 0:OFF"
+	ConfField	relay_overpower	"Overpower has occurred"	"Whether an overpower condition has occurred"
+	ConfField	relay_is_valid	"Functioning properly"		"Whether power result is valid: 1"
+		for L in 1 2 3; do
+			Name=$( eval "echo \${meter_${L}_name}" )
+			CsatornakConfig "$L" "$Name"
+		done
+	exit 0
+fi
+#:::::: Run :::::::::::::::::
+	Result=$( curl -s --connect-timeout 3 http://${address:-${def_ip}}/status )
+	[ -z "$Result" ] && exit 1
+	IFS=':'  read -r -a tmp <<<$( sed 's|"||g; s|,|\n|g;' <<<"$Result" |grep total_power )		## Total power [kW]
+	echo ${tmp[0]}.value $( bc <<< "scale=4; ${tmp[1]}/1000")
+	echo "$Result" |sed 's|"||g; s|}||g; s|.*relays:\[{||; s|\].*||; s|,|\n|g;' |while read a; do	## Relé állapotak
+	    IFS=':' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+	    Bool relay_${tmp[0]} ${tmp[1]}
+	done
+	echo "$Result" |sed 's|"||g; s|}||g; s|.*emeters:\[||; s|\].*||' |while read a; do		## Fázisok
+	    IFS='{' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+	    for L in 1 2 3; do
+		Csatornak $L ${tmp[${L}]}
+	    done
+	done
+exit 0

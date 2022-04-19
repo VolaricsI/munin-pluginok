@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+def_ip=192.168.0.40
+#:::::: Beallitasok :::::::::::
+#ignore=' total|temperature '
+	[ -z "$ignore" ] && ignore=URES
+#:::::: functions :::::::::::::
+ConfField(){
+    eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+			echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+Bool(){
+    [ "$2" == "true"  ] && echo "$1.value 1"
+    [ "$2" == "false" ] && echo "$1.value 0"
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
+	echo	"graph_title ${title:-Shelly Plug S power switch}"
+	echo	"graph_vlabel ${vlabel:-Shelly PLUG}"
+	echo	"graph_category ${category:-Shelly}"
+	ConfField	temperature	"Temperature"		"Internal device temperature in °C"
+	ConfField	overtemperature	"Over temperature"	"When device has overheated: 1"
+	ConfField	relay_ison	"Channel is turned"	"Whether the channel is turned 1:ON / 0:OFF"
+	ConfField	overpower	"Over power"		"Whether an overpower condition turned the channel OFF"
+	ConfField	has_timer	"Timer is armed"	"Whether a timer is currently armed for this channel: 1"
+	ConfField	total		"Energy consumed [Wh]"	"Total energy consumed by the attached electrical appliance in Watt-hour"
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	Result=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/status  |sed 's|"||g; s|,|\n|g; s|\[{|\n|g; s|}\]||g' )
+	[ -z "$Result" ] && exit 1
+	echo "$Result" |while read a; do
+	    IFS=':' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+		case ${tmp[0]} in
+		    ison)					Bool relay_${tmp[0]}  ${tmp[1]}		;;
+		    total)					echo "${tmp[0]}.value $[${tmp[1]}/60]"	;;
+		    temperature)				echo "${tmp[0]}.value ${tmp[1]}"	;;
+		    overpower|overtemperature|has_timer)	Bool ${tmp[0]} ${tmp[1]}		;;
+		esac
+	done
+exit 0
