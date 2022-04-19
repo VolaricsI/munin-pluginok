@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+#	Create by Voli
+#
+
+#:::::: Fix beallitasok :::::::
+def_ip=192.168.0.30
+#:::::: Beallitasok :::::::::::
+#ignore=' total_energy|voltage '
+	[ -z "$ignore" ] && ignore=URES
+#:::::: functions :::::::::::::
+ConfField(){
+	eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+			echo "$1.label	$2"
+	[ -n "$3" ] && 	echo "$1.info	$3"
+}
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	echo	"graph_title ${title:-OpenEVSE}"
+	echo	"graph_vlabel ${vlabel:-OpenEVSE}"
+	echo	"graph_category ${category:-EVSE}"
+	ConfField	temp1		"Temperature1"		"LCD (DS3232) temperature sensor"
+	ConfField	temp2		"Temperature2"		"LED (MCP9808) temperature sensor"
+	ConfField	temp3		"Temperature3"		"IR (TMP007) sensor"
+	ConfField	temp_max	"Max temperature"	"Max temperature power on"
+	ConfField	temp		"Temperature"		"The derived temperature"
+	ConfField	amp		"Current [A]"		"The value of the charge current in [A]"
+	ConfField	elapsed		"Elapsed time"		"The duration of the current charge session [min]"
+	ConfField	session_energy	"Session energy"	"Elapsed watt hour added during this charge session"
+	ConfField	status		"Status"		"The EVSE status"
+	ConfField	state		"State charger"		"State 1:Not connect, 2:Connect+ready, 3:Charge, 20:Sleep"
+	ConfField	voltage		"Voltage [V]"		"Set voltage for power calculations, not Voltmeter"
+	ConfField	pilot		"Pilot"			"Current Setting for Pilot"
+	ConfField	total_energy	"Total energy"		"Accumulated energy [kWh]"
+	ConfField	vehicle		"Connect vechile"	"Vechile state - 0:Not Connected, 1:Connected, 2:Charging, 4:Error"
+	ConfField	manual_override	"Manual override"	"The manual override is active: 1"
+exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	Result=$( curl -s --connect-timeout 3 http://${address:-${def_ip}}/status |sed 's|"||g; s|,|\n|g' )
+	[ -z "$Result" ] && exit 1
+	echo "$Result" |while read a; do
+	    IFS=':' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+	    case ${tmp[0]} in
+		    temp*)		[ ${tmp[1]} != false ] && echo ${tmp[0]}.value ${tmp[1]} |sed 's|\(.\)$|.\1|'	;;
+		    amp)		echo "${tmp[0]}.value $( bc <<< "scale=3; ${tmp[1]}/1000" )"			;;
+		    elapsed)		echo "${tmp[0]}.value $( bc <<< "scale=2; ${tmp[1]}/60"   )"			;;
+		    session_energy)	echo "${tmp[0]}.value $( bc <<< "scale=4; ${tmp[1]}/1000" )"			;;
+		    status)		case ${tmp[1]} in
+						active)		echo "${tmp[0]}.value 1"		;;
+						disabled)	echo "${tmp[0]}.value 0"		;;
+					esac	;;
+		    state)		case ${tmp[1]} in
+						254)		echo "${tmp[0]}.value 20"		;;	## Sleep
+						255)		echo "${tmp[0]}.value 21"		;;	## Disable
+						*)		echo "${tmp[0]}.value ${tmp[1]}"	;;
+					esac	;;
+		    voltage|pilot|total_energy|vehicle|manual_override)		echo "${tmp[0]}.value ${tmp[1]}"	;;
+	    esac
+	done
+exit 0
