@@ -12,7 +12,9 @@
 #	Sebesség sorrendjében van a kiírtás.
 
 POLICY_DIR=/sys/devices/system/cpu/cpufreq/
-FRQ_AKTUALIS=cpuinfo_cur_freq
+#FRQ_AKTUALIS=cpuinfo_cur_freq
+#FRQ_AKTUALIS=scaling_cur_freq
+FRQ_AKTUALIS='*_cur_freq'
 FRQ_MIN=cpuinfo_min_freq
 FRQ_MAX=cpuinfo_max_freq
 

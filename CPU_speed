@@ -13,7 +13,9 @@
 
 ATLAG=cpu_
 CPU_HELY=/sys/devices/system/cpu
-SPEED_HELY=cpufreq/cpuinfo_cur_freq
+#SPEED_HELY=cpufreq/cpuinfo_cur_freq
+#SPEED_HELY=cpufreq/scaling_cur_freq
+SPEED_HELY='cpufreq/*_cur_freq' 			## Más hardver más helyen van...
 
 if [ "$1" = "autoconf" ]; then
 	if [ ! -d ${CPU_HELY} ]; then
