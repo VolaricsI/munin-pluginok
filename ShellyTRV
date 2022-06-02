@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+# Type of product: Shelly TRV, Shelly-TRV
+#:::::: Fix beallitasok :::::::
+def_ip=Shelly-TRV
+#:::::: Beallitasok :::::::::::
+ignore=' is_valid|XXX '
+	[ -z "$ignore" ] && ignore=URES
+#:::::: functions :::::::::::::
+ConfField(){
+    eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
+			echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+Bool(){
+    [ "$2" == "true"  ] && echo "$1.value 1"
+    [ "$2" == "false" ] && echo "$1.value 0"
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
+	echo	"graph_title ${title:-Shelly Intelligent temperature control}"
+	echo	"graph_vlabel ${vlabel:-Shelly TRV}"
+	echo	"graph_category ${category:-Shelly}"
+	ConfField	pos			"Valve position [%]"
+	ConfField	target_t_enabled	"Automatic adjustment"
+	ConfField	target_t_value		"Setting temperature"
+	ConfField	temperature		"Current temperature"
+	ConfField	schedule		"Schedule enable/disable"
+	ConfField	schedule_profile	"Schedule profile number"
+	ConfField	boost_minutes		"Boost time [min]"
+	ConfField	bat_value		"Battery capacity [%]"
+	ConfField	voltage			"Battery voltage [V]"
+	ConfField	charger			"Connected to a charger"
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	Result=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/status |sed 's|["}]||g; s|,update:.*||; s|.*,thermostats:\[{||; s|,|\n|g; s|]||g; s|:{|_|g; ' )
+	[ -z "$Result" ] && exit 1
+	echo "$Result" |while read a; do
+	    IFS=':' read -r -a tmp <<< "$a";
+	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
+		case ${tmp[0]} in
+		    value)		echo "target_t_${tmp[0]}.value ${tmp[1]}"	;;
+		    tmp_value)		echo "temperature.value ${tmp[1]}"		;;
+		    pos|schedule_profile|boost_minutes|bat_value|voltage)	echo "${tmp[0]}.value ${tmp[1]}"	;;
+		    target_t_enabled|schedule|calibrated|charger|is_valid)	Bool ${tmp[0]}  ${tmp[1]}		;;
+		esac
+	done
+exit 0
