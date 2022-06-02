@@ -2,8 +2,9 @@
 #
 #	Create by Voli
 
+# Type of product: SHELLY BULB, SHELLY DUO - RGBW, SHELLY DUO - RGBW GU10, Shelly-ColorBulb
 #:::::: Fix beallitasok :::::::
-def_ip=192.168.0.46
+def_ip=Shelly-ColorBulb
 #:::::: Beallitasok :::::::::::
 #ignore='total|temp'
     [ -z "$ignore" ] && ignore=URES
@@ -26,46 +27,34 @@ if [ "$1" = "config" ]; then
 	echo	"graph_title ${title:-Shelly BULB color light}"
 	echo	"graph_vlabel ${vlabel:-Shelly BULB}"
 	echo	"graph_category ${category:-Shelly}"
-	echo	"ison.label 		Channel is turned"
-	echo	"ison.info 		Whether the channel is turned 1:ON / 0:OFF"
-	echo	"has_timer.label 	Timer is armed"
-	echo	"has_timer.info 	Whether a timer is currently armed for this channel: 1"
-	echo	"mode.label 		Configured mode"
-	echo	"mode.info 		Currently configured mode: 0:white or 1:color"
-	echo	"red.label 		Red brightness"
-	echo	"red.info 		Red brightness, 0..255, applies in mode=color"
-	echo	"green.label 		Green brightness"
-	echo	"green.info 		Green brightness, 0..255, applies in mode=color"
-	echo	"blue.label 		Blue brightness"
-	echo	"blue.info 		Blue brightness, 0..255, applies in mode=color"
-	echo	"white.label 		White"
-	echo	"white.info 		White level, 0..100"
-	echo	"gain.label 		Gain"
-	echo	"gain.info 		Gain for all channels, 0..100, applies in mode=color"
-	echo	"brightness.label 	Brightness"
-	echo	"brightness.info 	Brightness, 0..100"
-	echo	"temp.label 		Color temperature"
-	echo	"temp.info 		Color temperature in K, 3000..6500, applies in mode=white"
-	echo	"power.label 		Power [W]"
-	echo	"power.info 		Consumed power [W]"
-	echo	"total.label 		Energy consumed [Wh]"
-	echo	"total.info 		Total energy consumed by the attached electrical appliance in Watt-hour"
+	ConfField	ison		"Channel is turned"	"Whether the channel is turned 1:ON / 0:OFF"
+	ConfField	has_timer	"Timer is armed"	"Whether a timer is currently armed for this channel: 1"
+	ConfField	mode		"Configured mode"	"Currently configured mode: 0:white or 1:color"
+	ConfField	red 		"Red brightness"	"Red brightness, 0..255, applies in mode=color"
+	ConfField	green		"Green brightness"	"Green brightness, 0..255, applies in mode=color"
+	ConfField	blue		"Blue brightness"	"Blue brightness, 0..255, applies in mode=color"
+	ConfField	white		White			"White level, 0..100"
+	ConfField	gain 		Gain			"Gain for all channels, 0..100, applies in mode=color"
+	ConfField	brightness	Brightness		"Brightness, 0..100"
+	ConfField	temp		"Color temperature"	"Color temperature in K, 3000..6500, applies in mode=white"
+	ConfField	power		"Power [W]"		"Consumed power [W]"
+	ConfField	total		"Energy consumed [Wh]"	"Total energy consumed by the attached electrical appliance in Watt-hour"
 	exit 0
 fi
 
 #:::::: Run :::::::::::::::::
-	Result=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/status  |sed 's|"||g; s|,|\n|g; s|\[{|\n|g; s|}\]||g' )
+	Result=$( curl -s --connect-timeout 3 http://${address:-${def_ip}}/status |sed 's|"||g; s|,|\n|g; s|\[{|\n|g; s|}\]||g' )
 	[ -z "$Result" ] && exit 1
 	echo "$Result" |while read a; do
 	    IFS=':' read -r -a tmp <<< "$a";
 	    eval "case \"${tmp[0]}\" in $ignore) continue ;; esac"	## Ignore field
 		case ${tmp[0]} in
-		    mode)	case ${tmp[0]} in
+		    mode)	case ${tmp[1]} in
 					white) echo ${tmp[0]}.value 0	;;
 					color) echo ${tmp[0]}.value 1	;;
 				esac 	;;
-		    ison|has_timer)	Bool ${tmp[0]} ${tmp[1]}		;;
-		    total)		echo "${tmp[0]}.value $( bc <<< "scale=2; ${tmp[1]}/60")"	;;
+		    ison|has_timer)	Bool ${tmp[0]} ${tmp[1]}						;;
+		    total)		echo "${tmp[0]}.value $( bc <<< "scale=2; ${tmp[1]}/60")"		;;
 		    brightness|red|green|blue|white|gain|temp|power)	echo "${tmp[0]}.value ${tmp[1]}"	;;
 		esac
 	done
