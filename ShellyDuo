@@ -2,8 +2,9 @@
 #
 #	Create by Voli
 
+# Type of product: SHELLY DUO, SHELLY DUO GU10, SHELLY VINTAGE A60, SHELLY VINTAGE ST64, SHELLY VINTAGE G125, Shelly-Duo, Shelly-Vintage
 #:::::: Fix beallitasok :::::::
-def_ip=192.168.0.45
+def_ip=Shelly-Duo
 #:::::: Beallitasok :::::::::::
 #ignore='has_timer|temp'
     [ -z "$ignore" ] && ignore=URES

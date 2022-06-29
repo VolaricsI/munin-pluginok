@@ -2,8 +2,9 @@
 #
 #	Create by Voli
 
+# Type of product: SHELLY BUTTON1, Shelly-Button-1
 #:::::: Fix beallitasok :::::::
-def_ip=192.168.0.14
+def_ip=Shelly-Button-1
 #:::::: Beallitasok :::::::::::
 #ignore='voltage|sensor_error'
     [ -z "$ignore" ] && ignore=URES
