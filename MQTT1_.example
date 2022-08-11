@@ -1,0 +1,8 @@
+## Konfiguráció
+Title='Shelly akkumulátor töltöttség'
+Vlabel='Egyben az összes akkumulátor töltöttség'
+Category='Shelly'
+
+SERVER=localhost
+SensorList='shellies/HT_Kert/sensor/battery shellies/HT_Szoba/sensor/battery shellies/Button/sensor/battery shellies/shellydw2-074248/sensor/battery'
+SensorNameIgnore="_sensor_battery"

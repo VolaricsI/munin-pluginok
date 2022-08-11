@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+#MQTT_SERVER=localhost
+#SensorList='shellies/shellydw2-074248/sensor/temperature shellies/HT_Kert/sensor/temperature'
+#SensorNameIgnore="_sensor_temperature"
+#:::::: Beallitasok :::::::::::
+ConfFile=/etc/munin/conf.d/$( basename $0 )
+    [ -e $ConfFile ] && . $ConfFile
+#:::::: functions :::::::::::::
+ConfField(){
+    [ -n "$2" ] && 	echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+Nevre(){
+    echo "$1" |sed "s|/|_|g; s|$SensorNameIgnore||g"
+}
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	echo	"graph_title ${title:-${Title}}"
+	echo	"graph_vlabel ${vlabel:-${Vlabel}}"
+	echo	"graph_category ${category:-${Category}}"
+
+	    for f in $SensorList ; do
+		e=$( Nevre "$f" )
+		l="${e}_label" ;i="${e}_info"
+		ConfField "$e" "$e"
+	    done
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	for f in $SensorList ; do
+	    e=$( Nevre "$f" )
+	    mosquitto_sub -t "$f" -C 1 -W 1 -F "$e.value %p"
+	done
+exit

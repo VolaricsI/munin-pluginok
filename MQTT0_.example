@@ -1,0 +1,18 @@
+## Konfiguráció
+Title='A kertben'
+Vlabel='shellies/HT_Kert'
+Category='Shelly'
+
+SERVER=localhost
+DEVICE=shellies/HT_Kert/sensor
+ValueList='temperature humidity battery error'
+
+temperature="Hőmérséklet"
+temperature_label="Hőmérséklet"
+temperature_info="Hőmérséklet [°C]"
+humidity_label="páratartalom"
+humidity_info="Páratartalom [%]"
+battery_label="töltöttség"
+battery_info="Töltöttség [%]"
+error_label="hibakód"
+error_info="Ha a mérés során gond volt akkor <>0"

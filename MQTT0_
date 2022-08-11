@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+#MQTT_SERVER=localhost
+#DEVICE=shellies/shellyht-D3C445/sensor
+#ValueList='temperature humidity battery error  '
+#:::::: Beallitasok :::::::::::
+ConfFile=/etc/munin/conf.d/$( basename $0 )
+    [ -e $ConfFile ] && . $ConfFile
+#:::::: functions :::::::::::::
+ConfField(){
+    [ -n "$2" ] && 	echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	echo	"graph_title ${title:-${Title}}"
+	echo	"graph_vlabel ${vlabel:-${Vlabel}}"
+	echo	"graph_category ${category:-${Category}}"
+
+	    for f in $ValueList ; do
+		l="${f}_label" ;i="${f}_info"
+		ConfField "$f" "${!l}" "${!i}"
+	    done
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+	for f in $ValueList ; do
+	    mosquitto_sub -t "$DEVICE/$f" -C 1 -W 1 -F "$f.value %p"
+	done
+exit
