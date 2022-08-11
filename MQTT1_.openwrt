@@ -1,3 +1,7 @@
+##
+## Beállító file, egyedivé teszi az álltalános modult.
+## Másold be /etc/munin/conf.d/ helyre és legyen azonos a neve a plugin nevével
+
 ## Konfiguráció
 Title='Shelly akkumulátor töltöttség'
 Vlabel='Egyben az összes akkumulátor töltöttség'
