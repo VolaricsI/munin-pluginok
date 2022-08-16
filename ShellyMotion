@@ -3,9 +3,9 @@
 #	Create by Voli
 
 #:::::: Fix beallitasok :::::::
-def_ip=192.168.18.41
 #:::::: Beallitasok :::::::::::
-#ignore='lux_is_valid'
+    ConfFile=/etc/munin/conf.d/$( basename $0 )
+    [ -e $ConfFile ] && . $ConfFile
     [ -z "$ignore" ] && ignore=URES
 #:::::: functions :::::::::::::
 ConfField(){
@@ -35,11 +35,11 @@ Kiir(){
 if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
 
 if [ "$1" = "config" ]; then
-	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
+	[ -z "$vlabel" ] && vlabel=$( curl -s --connect-timeout 3  http://${address}/settings |sed 's|"||g; s|,|\n|g' |grep '^name:' | sed 's|.*:||' |grep -v null )
 	echo	"graph_title ${title:-Shelly Motion sensor}"
 	echo	"graph_vlabel ${vlabel:-Shelly Motion}"
 	echo	"graph_category ${category:-Shelly}"
-	ConfField	lux_value		"Illumination"		"Illumination measure by the sensor in lux"
+	ConfField	lux_value		"Illumination"		"Illumination measure by the sensor [lux]"
 	ConfField	lux_illumination	"Illumination type"	"One of 0:dark, 1:twilight, 2:bright"
 	ConfField	lux_is_valid		"Lux is valid"		"Whether lux sensor self-checks OK: 1"
 	ConfField	sensor_vibration	"Tamper"		'Tamper (vibration) has been detected. Cleared after vibration has gone'
@@ -53,7 +53,7 @@ if [ "$1" = "config" ]; then
 fi
 
 #:::::: Run :::::::::::::::::
-	Result=$( curl -s --connect-timeout 3  http://${address:-${def_ip}}/status |sed 's|"||g; s|}||g; s|{||g; s|.*lux:|lux:|; s|update:.*||'  )
+	Result=$( curl -s --connect-timeout 3  http://${address}/status |sed 's|"||g; s|}||g; s|{||g; s|.*lux:|lux:|; s|update:.*||'  )
 	[ -z "$Result" ] && exit 1
 	echo "$Result" |sed 's|.*lux:||; s|sensor:.*||; s|,|\n|g; ' |while read a; do			## Lux
 	    IFS=':' read -r -a tmp <<< "$a";
