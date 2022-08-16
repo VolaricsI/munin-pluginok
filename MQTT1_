@@ -5,7 +5,7 @@
 #:::::: Fix beallitasok :::::::
 #MQTT_SERVER=localhost
 #SensorList='shellies/shellydw2-074248/sensor/temperature shellies/HT_Kert/sensor/temperature'
-#SensorNameIgnore="_sensor_temperature"
+#SensorNameIgnoreList="_sensor_temperature _temperature"
 #:::::: Beallitasok :::::::::::
 ConfFile=/etc/munin/conf.d/$( basename $0 )
     [ -e $ConfFile ] && . $ConfFile
@@ -14,8 +14,15 @@ ConfField(){
     [ -n "$2" ] && 	echo "$1.label	$2"
     [ -n "$3" ] && 	echo "$1.info	$3"
 }
+#Nevre(){
+#    echo "$1" |sed "s|/|_|g; s|$SensorNameIgnore||g"
+#}
 Nevre(){
-    echo "$1" |sed "s|/|_|g; s|$SensorNameIgnore||g"
+	tmp=$( echo "$1" |sed 's|/|_|g' )
+	for i in $SensorNameIgnoreList ; do
+	    tmp=$( echo $tmp | sed "s|$i||g" )
+	done
+	echo $tmp
 }
 #:::::: Start :::::::::::::::::
 if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
