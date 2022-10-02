@@ -34,14 +34,15 @@ if [ "$1" = "config" ]; then
 	exit 0
 fi
 
-#Az IP-k kiolvasása
-Ip=$( host -t A  ${HOST}|grep "has address"|sed 's/.*address//g; s/ //g' )
-#echo $Ip
+	#Az IP-k kiolvasása
+	Ip=$( host -W 1 -t A  ${HOST}|grep "has address"|sed 's/.*address//g; s/ //g' )
+#echo --$Ip---
+	[ -z "$Ip" ] && exit 1
 
-for i in A B C D; do
-	echo -n "${i}.value "
-	echo ${Ip}|sed 's/\..*$//g'
-	Ip=$( echo ${Ip}|sed 's/^[0-9]\+\.//g' )
-done
+	for i in A B C D; do
+		echo -n "${i}.value "
+		echo ${Ip} |sed 's/\..*$//g'
+		Ip=$( echo ${Ip}|sed 's/^[0-9]\+\.//g' )
+	done
 
 exit 0

@@ -32,8 +32,8 @@ fi
 
 #Az IP-k kiolvasása
 for i in ${HOSTS}; do
-	echo -n ${i}|sed 's/\./_/g';	echo -n ".value "
-	host ${i}|grep "has address"|sed 's/.*address//g; s/\.//g; '
+	Ip=$( host -W 1 ${i} |grep "has address" |sed 's/.*address//g; s/\.//g; ' )
+	[ -n "$Ip" ] && echo "${i}value $Ip" |sed 's|\.|_|g; s|value|.value|'
 done
 
 exit 0
