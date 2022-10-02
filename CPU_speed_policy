@@ -53,6 +53,6 @@ fi
 
 
 	for i in ${Policyk}; do
-		echo "${i}.value $( cat $POLICY_DIR/$i/$FRQ_AKTUALIS )000"
+		echo "${i}.value $( cat $POLICY_DIR/$i/$FRQ_AKTUALIS |sort -u )000"
 	done
 exit 0
