@@ -12,7 +12,7 @@ ConfField(){
     eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
 			echo "$1.label	$2"
     [ -n "$3" ] && 	echo "$1.info	$3"
-    [ "$1" == bat_value ] && ( echo "bat_value.warning	60" ; echo "bat_value.critical	40" )
+    [ "$1" == bat_value ] && ( echo "bat_value.warning	60:" ; echo "bat_value.critical	40:" )
 }
 Bool(){
     [ "$2" == "true"  ] && echo "$1.value 1"
