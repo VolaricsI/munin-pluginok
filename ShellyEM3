@@ -15,7 +15,6 @@ ConfField(){
     [ -n "$3" ] && 	echo "$1.info	$3"
 }
 CsatornakConfig(){
-echo $*
 	Name=${2:-L$1}
 	for field in power pf current voltage is_valid total total_returned; do
 		eval "case \"${field}\" in $ignore) continue ;; esac"	## Ignore field
