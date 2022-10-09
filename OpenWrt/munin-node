@@ -19,6 +19,8 @@ NTP_PEER="pool.ntp.org";
 # if plugindir_ is present in $PLUGINS,
 # iexecutables (scripts, binaries) matching the following pattern will be scanned and operated as plugins
 PLUGINPATTERN=$(dirname $0)"/munin-node-plugin.d/*"
+PLUGINPATTERN="/etc/munin/plugin.d/*"
+
 
 # Remove unwanted plugins from this list
 ##PLUGINS="df cpu if_ if_err_ load memory processes swap netstat uptime interrupts irqstats ntpdate plugindir_"

@@ -2,45 +2,47 @@
 # Simple Bourne Shell script that implements Munin protocoll and 
 # some common Linux plugins.
 
-ISMERETLEN="Nincs neve"
+ISMERETLEN="Neve nincs"
+
+WiFi_Dump(){
+    for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
+	iw $i station dump
+    done
+}
+
 
 if [ .$1 = .config ]; then
     echo "graph_title WiFi kapcsolodas"
     echo "graph_vlabel A WiFi-re csatlakozas idotartama"
     echo "graph_category Voli"
-    echo "graph_args --upper-limit 180 --rigid "
+    echo "graph_args --upper-limit 180 --rigid"
 	##Static DHCP nevek
-	List0=" $( grep "dhcp-host=" /var/etc/dnsmasq.conf |sed 's/dhcp-host=//g; s/,.*//g; ' ) "
+	List0=" $( grep -h -e "dhcp-host=" /var/etc/dnsmasq.conf.* |sed 's|dhcp-host=||g; s|,.*||g' |sort -u ) "
 
 	##Kapott DHCP-vel IP-t
 	List1=" $( sed 's/^[0-9]\+ //g; s/ .*//g;' /var/dhcp.leases ) "
 
 	##Aktiv WiFi kapcsolatok
-	List2=" $( for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
-			iw $i station dump|grep Station|sed 's/Station//g; s/^ *//g; s/ .*//g; '
-		done ) "
+	List2=$( WiFi_Dump |grep Station |sed 's|Station||g; s|^ *||g; s| .*||g' )
 
 	##Azonossak kivetele, de a sorrend nem valtozik
-	for i in ${List0}  ${List1} ${List2}; do
+	for i in ${List0} ${List1} ${List2}; do
 		echo $i
-	done |sort -u -m \
-		|while read a; do
-			Neve=$( grep "${a}" /var/etc/dnsmasq.conf|sed 's/.*,//g; ' )	#Static DHCP-ben a neve
-			if [ -z "$Neve" ]; then
-			   Neve=$( grep "${a}" /var/dhcp.leases |sed "s/^[0-9]\+ [0-9a-f:]\+ [0-9.]\+ //g; s/ .\+//g; s/*/$ISMERETLEN/" ) 	#DHCP-ben milyen nevet mondott
-			fi
+	done|sort -u |while read a; do
+			Neve=$( grep -h -e "${a}" /var/etc/dnsmasq.conf.* |sed 's|.*,||g' |sort -u )	#Static DHCP-ben a neve
+			[ -z "$Neve" ] && Neve=$( grep "${a}" /var/dhcp.leases |sed "s|^[0-9]\+ [0-9a-f:]\+ [0-9.]\+ ||g; s| .\+||g; s|*|$ISMERETLEN|" ) 	#DHCP-ben milyen nevet mondott
 			if [ -z "$Neve" ]; then Neve="$a"; fi
-			echo V${a}.label ${Neve} |sed 's/://g;'
+			echo V${a}.label ${Neve} |sed 's|:||g;'
 		done;
-    exit
+    exit 0
 fi
 
-for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
-    iw $i station dump|grep -e "Station" -e "connected time:" |sed 's/Station//g; s/connected time://g; '
-done |sed 's/^ *//g; s/ .*//g; ' \
+
+    WiFi_Dump |grep -e "Station" -e "connected time:" |sed 's|Station||g; s|connected time:||g; s|\t||g; s|^ *||g; s| .*||g; '	\
 	|while read a; do
 		read b;
 		if [ -z "$b" ]; then continue; fi
 		echo -n "V${a}.value " |sed 's/://g;'
 		echo $(($b/60))
 	done
+exit 0
