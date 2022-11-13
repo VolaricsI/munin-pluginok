@@ -4,18 +4,18 @@
 
 # Type of product: SHELLY H&T, Shelly Door/Window 2, Shelly Plug S, Shelly TRV
 #:::::: Fix beallitasok :::::::
+MQTT_SERVER=localhost
 DEVICE="shellies/"
 LINE_TRV='/status {\"tmp\": {\"value\":'
 #:::::: Beallitasok :::::::::::
-MQTT_SERVER=localhost
 ConfFile=/etc/munin/conf.d/$( basename $0 )
     [ -e $ConfFile ] && . $ConfFile
 #:::::: functions :::::::::::::
 ValueList(){
 	## Közvetlen olvasható a hőmérséklet 
-    mosquitto_sub -v -t "${DEVICE}#" -W 1 |grep "/temperature " |sed "s|^$DEVICE||; s|/.* |.value | "
+    mosquitto_sub -h $MQTT_SERVER -v -t "${DEVICE}#" -W 1 |grep "/temperature " |sed "s|^$DEVICE||; s|/.* |.value | "
 	## TRV
-    mosquitto_sub -v -t "${DEVICE}+/status" -W 1 |grep -e "$LINE_TRV" |sed "s|^$DEVICE||; s|$TRV_TEMP|.value |; s|,.*|| "
+    mosquitto_sub -h $MQTT_SERVER -v -t "${DEVICE}+/status" -W 1 |grep -e "$LINE_TRV" |sed "s|^$DEVICE||; s|$LINE_TRV|.value |; s|,.*|| "
 }
 
 #:::::: Start :::::::::::::::::
