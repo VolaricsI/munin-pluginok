@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+# Type of product: SHELLY H&T, Shelly Door/Window 2, Shelly Plug S, Shelly TRV
+#:::::: Fix beallitasok :::::::
+DEVICE="shellies/"
+LINE_TRV='/status {\"tmp\": {\"value\":'
+#:::::: Beallitasok :::::::::::
+MQTT_SERVER=localhost
+ConfFile=/etc/munin/conf.d/$( basename $0 )
+    [ -e $ConfFile ] && . $ConfFile
+#:::::: functions :::::::::::::
+ValueList(){
+	## Közvetlen olvasható a hőmérséklet 
+    mosquitto_sub -v -t "${DEVICE}#" -W 1 |grep "/temperature " |sed "s|^$DEVICE||; s|/.* |.value | "
+	## TRV
+    mosquitto_sub -v -t "${DEVICE}+/status" -W 1 |grep -e "$LINE_TRV" |sed "s|^$DEVICE||; s|$TRV_TEMP|.value |; s|,.*|| "
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	echo	"graph_title ${title:-${MQTT_SERVER}}"
+	echo	"graph_vlabel Shellies eszközök hőmérséklete"
+	echo	"graph_category Hőmérsékletek"
+
+	ValueList |sed 's|.value .*||' |while read l; do
+	    echo "${l}.label ${l} hőmérséklete"
+	    echo "${l}.info ${l} által mért hőmérséklet"
+	done
+
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+    ValueList
+
+    exit 0
