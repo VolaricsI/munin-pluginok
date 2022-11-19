@@ -1,0 +1,10 @@
+    address="192.168.18.50"
+    title="Shelly EM3 power meter"
+#    vlabel="Shelly EM3+++"
+    category="OpenEVSE"
+#    env.meter_1_name		channel mame 1
+#    env.meter_2_name		channel mame 2
+#    env.meter_3_name		channel mame 3
+
+    ignore="total|total_returned|voltage|has_timer"
+

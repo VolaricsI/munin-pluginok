@@ -4,10 +4,12 @@
 #
 
 #:::::: Fix beallitasok :::::::
-def_ip=192.168.0.30
-#:::::: Beallitasok :::::::::::
+def_ip=192.168.18.51
 #ignore=' total_energy|voltage '
-	[ -z "$ignore" ] && ignore=URES
+#:::::: Beallitasok :::::::::::
+ConfFile=/etc/munin/conf.d/$( basename $0 )
+    [ -e $ConfFile ] && . $ConfFile
+    [ -z "$ignore" ] && ignore=URES
 #:::::: functions :::::::::::::
 ConfField(){
 	eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field

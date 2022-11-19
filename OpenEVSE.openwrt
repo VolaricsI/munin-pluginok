@@ -1,0 +1,5 @@
+    address="192.168.18.51"
+    title="OpenEVSE"
+    vlabel="BP beálló"
+    category="OpenEVSE"
+    ignore="voltage|temp|total_energy"

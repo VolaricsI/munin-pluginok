@@ -5,9 +5,11 @@
 
 #:::::: Fix beallitasok :::::::
 def_ip=192.168.0.31
-#:::::: Beallitasok :::::::::::
 #ignore=' total|total_returned|overpower|voltage '
-	[ -z "$ignore" ] && ignore=URES
+#:::::: Beallitasok :::::::::::
+ConfFile=/etc/munin/conf.d/$( basename $0 )
+    [ -e $ConfFile ] && . $ConfFile
+    [ -z "$ignore" ] && ignore=URES
 #:::::: functions :::::::::::::
 ConfField(){
     eval "case \"$1\" in $ignore) return ;; esac"	## Ignore field
