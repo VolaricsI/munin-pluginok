@@ -14,9 +14,6 @@ ConfField(){
     [ -n "$2" ] && 	echo "$1.label	$2"
     [ -n "$3" ] && 	echo "$1.info	$3"
 }
-#Nevre(){
-#    echo "$1" |sed "s|/|_|g; s|$SensorNameIgnore||g"
-#}
 Nevre(){
 	tmp=$( echo "$1" |sed 's|/|_|g' )
 	for i in $SensorNameIgnoreList ; do
