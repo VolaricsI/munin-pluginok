@@ -610,7 +610,7 @@ do
   if [ "$PLUG" = "if_" ]; then  
     for INTER in $(grep -E '^ *(ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
     do
-      INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/')
+      INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/g')
       RES="$RES if_$INTERRES"
       eval "fetch_if_${INTERRES}() { fetch_if $INTER $@; };"
       eval "config_if_${INTERRES}() { config_if $INTER $@; };"
@@ -618,7 +618,7 @@ do
   elif [ "$PLUG" = "if_err_" ]; then
     for INTER in $(grep -E '^ *(ppp|eth|wlan|ath|ra|ipsec|tap|br-)[^:]{1,}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
     do
-      INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/')
+      INTERRES=$(echo $INTER | sed -e 's/\./VLAN/' -e 's/\-/_/g')
       RES="$RES if_err_$INTERRES"
       eval "fetch_if_err_${INTERRES}() { fetch_if_err $INTER $@; };"
       eval "config_if_err_${INTERRES}() { config_if_err $INTER $@; };"
