@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+# Type of product: SHELLY H&T, Shelly Door/Window 2, Shelly Plug S, Shelly TRV
+#:::::: Fix beallitasok :::::::
+    LINE_TRV='/status {\"tmp\": {\"value\":'
+    ConfFile=/etc/munin/plugin-conf.d/$( basename $0 )
+#:::::: Beallitasok :::::::::::
+    [ -e $ConfFile 	] && . $ConfFile
+    [ -z "$SERVER" 	] && SERVER=localhost
+    [ -z "$DEVICE" 	] && DEVICE='shellies/'
+
+    [ -z "$Category" 	] && Category='Shelly'
+    [ -z "$Title" 	] && Title='Shellies eszközök hőmérséklete'
+    [ -z "$Vlabel" 	] && Vlabel='hőmérséklet [°C]'
+
+#:::::: functions :::::::::::::
+ConfField(){
+    [ -n "$2" ] && 	echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+ValueList(){
+	## Közvetlen olvasható a hőmérséklet 
+    mosquitto_sub --quiet --host $SERVER -W 1 --topic "${DEVICE}#" -v |grep "/temperature " |sed "s|^$DEVICE||; s|/.* |.value | "
+	## TRV
+    mosquitto_sub --quiet --host $SERVER -W 1 --topic "${DEVICE}+/status" -v |grep -e "$LINE_TRV" |sed "s|^$DEVICE||; s|$LINE_TRV|.value |; s|,.*|| "
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	echo	"graph_title $Title"
+	echo	"graph_vlabel $Vlabel"
+	echo	"graph_category $Category"
+						##Azok a betük melyek nem lehetnek változó nevek
+	ValueList |sed 's|.value .*||' |grep -v -e "[áéíóöőúüű]" |while read nev; do
+	    l="${nev}_label" ;i="${nev}_info"
+	    ConfField "$nev" "${!l}" "${!i}"
+    done
+fi
+
+#:::::: Run :::::::::::::::::
+    ValueList
+exit 0
