@@ -39,6 +39,7 @@ if [ "$1" = "config" ]; then
 	    l="${nev}_label" ;i="${nev}_info"
 	    ConfField "$nev" "${!l}" "${!i}"
     done
+    exit 0
 fi
 
 #:::::: Run :::::::::::::::::
