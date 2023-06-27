@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+# Type of product: SHELLY H&T, Shelly Button, Shelly Door/Window 2; Shelly TRV, Shelly Motion 2
+#:::::: Fix beallitasok :::::::
+    ConfFile=/etc/munin/plugin-conf.d/$( basename $0 )
+#:::::: Beallitasok :::::::::::
+    [ -e $ConfFile 	] && . $ConfFile
+    [ -z "$SERVER" 	] && SERVER=localhost
+    [ -z "$DEVICE" 	] && DEVICE='shellies'
+
+    [ -z "$Category" 	] && Category='Shelly'
+    [ -z "$Title" 	] && Title='Shellies eszközök akkumulátor töltöttsége'
+    [ -z "$Vlabel" 	] && Vlabel='töltöttség [%]'
+
+#:::::: functions :::::::::::::
+ConfField(){
+    [ -z "$2" ] && 	echo "$1.label	$1"			## Ha nincs megadva akkor is kell, hogy legyen
+    [ -n "$2" ] && 	echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+
+ValueList(){
+    mosquitto_sub --quiet --host $SERVER -W 1 --topic "${DEVICE}/+/sensor/battery" --topic "${DEVICE}/+/status" -v |sed "s|[-áéíóöőúüű]\+|_|g; s|^$DEVICE/||; s|/.* |.value |; s| .*bat\":| |; s|}|| "
+}
+
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+    echo	"graph_title $Title"
+    echo	"graph_vlabel $Vlabel"
+    echo	"graph_category $Category"
+			##Azok a betük melyek nem lehetnek változó nevek
+    ValueList |sed 's|.value .*||; s|[-áéíóöőúüű]\+|_|g' |while read nev; do
+        l="${nev}_label" ;i="${nev}_info"
+        ConfField "$nev" "${!l}" "${!i}"
+    done
+    exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+    ValueList
+exit 0
