@@ -1,0 +1,25 @@
+#
+## Beállító file, egyedivé teszi az álltalános modult.
+## Másold be /etc/munin/plugin-conf.d/ helyre és legyen azonos a neve a plugin nevével
+
+## Konfiguráció
+SERVER=localhost
+
+##Grafikon szövegei
+Category='Shelly'
+Title='Shelly H&T'
+Vlabel='Értékei'
+
+##Mely eszköz, mely paraméterei
+DEVICE=shellies/HT_Kert/sensor
+ValueList='temperature humidity battery error'
+
+##A paraméterek nevezékei a grafikonon
+temperature_label="Hőmérséklet"
+temperature_info="Hőmérséklet [°C]"
+humidity_label="páratartalom"
+humidity_info="Páratartalom [%]"
+battery_label="töltöttség"
+battery_info="Töltöttség [%]"
+error_label="hibakód"
+error_info="Ha a mérés során gond volt akkor <>0"

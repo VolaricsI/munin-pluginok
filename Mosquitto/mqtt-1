@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+#	Create by Voli
+
+#:::::: Fix beallitasok :::::::
+ConfFile=/etc/munin/plugin-conf.d/$( basename $0 )
+#:::::: Beallitasok :::::::::::
+    [ -e $ConfFile 	] && . $ConfFile
+
+    [ -z "$SERVER" 	] && SERVER=localhost
+    [ -z "$DEVICE" 	] && DEVICE='\$SYS/broker/store/messages'
+    [ -z "$ValueList" 	] && ValueList='count bytes'
+
+    [ -z "$Category" 	] && Category=mosquitto
+    [ -z "$Title" 	] && Title=$( mosquitto_sub --quiet -h $SERVER -C 1 -W 1 -t '$SYS/broker/version' )
+    [ -z "$Vlabel" 	] && Vlabel='$SYS/broker/clients'
+
+#:::::: functions :::::::::::::
+ConfField(){
+    [ -z "$2" ] && 	echo "$1.label	$1"
+    [ -n "$2" ] && 	echo "$1.label	$2"
+    [ -n "$3" ] && 	echo "$1.info	$3"
+}
+#:::::: Start :::::::::::::::::
+if [ "$1" = "autoconf" ]; then  echo yes ; exit 0; fi
+
+if [ "$1" = "config" ]; then
+	echo	"graph_title $Title"
+	echo	"graph_vlabel $Vlabel"
+	echo	"graph_category $Category"
+
+	for f in $ValueList ; do
+	    l="${f}_label" ;i="${f}_info"
+	    ConfField "$f" "${!l}" "${!i}"
+	done
+	exit 0
+fi
+
+#:::::: Run :::::::::::::::::
+    for f in $ValueList ; do
+	eval mosquitto_sub --quiet -C 1 -W 1   --host $SERVER --topic "${DEVICE}/$f" -F "\"$f.value %p\""
+    done
+exit 0
