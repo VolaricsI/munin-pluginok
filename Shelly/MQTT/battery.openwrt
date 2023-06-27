@@ -11,6 +11,5 @@ Title='Shelly eszközök töltöttsége'
 Vlabel='töltöttség [%]'
 
 ##Grafikon infó adatok
-
 HT_Kert_label="A kertben van"
 HT_Kert_info="A kerti ablakban van elhelyezve"
