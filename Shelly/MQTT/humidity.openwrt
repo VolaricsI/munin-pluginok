@@ -1,0 +1,17 @@
+##
+## Beállító file, egyedivé teszi az álltalános modult.
+## Másold be /etc/munin/plugin-conf.d/ helyre és legyen azonos a neve a plugin nevével
+
+## Konfiguráció
+SERVER=localhost
+
+##Grafikon szövegei
+Category='Shelly'
+Title='Shelly eszközök álltal mért páratartalmak'
+Vlabel='páratartalom [%]'
+
+##Grafikon infó adatok
+HT_Kert_label="A kertben van"
+HT_Kert_info="A kerti ablakban van elhelyezve"
+HT_Szoba_label="A Szobában van"
+HT_Szoba_info="A radiátoron van"
