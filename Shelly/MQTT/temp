@@ -23,9 +23,9 @@ ConfField(){
 }
 ValueList(){
 	## Közvetlen olvasható a hőmérséklet 
-    mosquitto_sub --quiet --host $SERVER -W 1 --topic "${DEVICE}/#" -v |grep "/temperature " |sed "s|^$DEVICE/||; s|/.* |.value | "
+    mosquitto_sub --quiet --host $SERVER -W 1 --topic "${DEVICE}/#" -v |grep "/temperature " |sed "s|^$DEVICE/||; s|/.* |.value |; s|[-áéíóöőúüű]\+|_|g"
 	## TRV
-    mosquitto_sub --quiet --host $SERVER -W 1 --topic "${DEVICE}/+/status" -v |grep -e "$LINE_TRV" |sed "s|^$DEVICE/||; s|$LINE_TRV|.value |; s|,.*|| "
+    mosquitto_sub --quiet --host $SERVER -W 1 --topic "${DEVICE}/+/status" -v |grep -e "$LINE_TRV" |sed "s|^$DEVICE/||; s|$LINE_TRV|.value |; s|,.*||; s|[-áéíóöőúüű]\+|_|g"
 }
 
 #:::::: Start :::::::::::::::::
@@ -36,7 +36,8 @@ if [ "$1" = "config" ]; then
 	echo	"graph_vlabel $Vlabel"
 	echo	"graph_category $Category"
 						##Azok a betük melyek nem lehetnek változó nevek
-	ValueList |sed 's|.value .*||' |grep -v -e "[-áéíóöőúüű]" |while read nev; do
+#	ValueList |sed 's|.value .*||' |grep -v -e "[-áéíóöőúüű]" |while read nev; do
+	ValueList |sed 's|.value .*||' |sed 's|[-áéíóöőúüű]\+|_|g' |while read nev; do
 	    l="${nev}_label"; i="${nev}_info"
 	    ConfField "$nev" "${!l}" "${!i}"
     done
