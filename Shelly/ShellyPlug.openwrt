@@ -1,0 +1,48 @@
+#
+## Beállító file, egyedivé teszi az álltalános modult.
+## Másold be /etc/munin/plugin-conf.d/ helyre és legyen azonos a neve a plugin nevével
+
+## Konfiguráció
+Address=192.168.18.45
+Address=Shelly-Huto
+
+## Ezeket a sorokat kihagyjuk
+Ignore=' overpower|total '
+
+## Grafikon szövegei
+Category='Shelly'
+Title='Shelly Plug S a hűtő van rajta'
+Vlabel='Értékei'
+
+
+## Grafikon magyarázatai
+          power_label="Power"
+           power_info="Instantaneous power"
+    temperature_label="Temperature"
+     temperature_info="Internal device temperature in °C"
+overtemperature_label="Over temperature"
+ overtemperature_info="When device has overheated: 1"
+     relay_ison_label="Channel is turned"
+      relay_ison_info="Whether the channel is turned 1:ON / 0:OFF"
+      overpower_label="Over power"
+       overpower_info="Whether an overpower condition turned the channel OFF"
+      has_timer_label="Timer is armed"
+       has_timer_info="Whether a timer is currently armed for this channel: 1"
+          total_label="Energy consumed [Wh]"
+           total_info="Total energy consumed by the attached electrical appliance in Watt-hour"
+
+## Magyarul..
+          power_label="Teljesítmény"
+           power_info="Pillanatnyi fogyasztás"
+    temperature_label="Hőmérséklet"
+     temperature_info="Hőmérséklet °C"
+overtemperature_label="Határ hőmérséklet túllépés"
+ overtemperature_info="Ha túl lépte akkor: 1"
+     relay_ison_label="Bekapcsolva"
+      relay_ison_info="A relé állapota: 1:ON / 0:OFF"
+      overpower_label="Teljesítmény túllépés"
+       overpower_info="Whether an overpower condition turned the channel OFF"
+      has_timer_label="Időzítő aktív"
+       has_timer_info="Ha az időzítő aktíválva van: 1"
+          total_label="A fogyasztás [Wh]"
+           total_info="Fogyasztás a feszültség alá helyezés óta Watt-óra"
