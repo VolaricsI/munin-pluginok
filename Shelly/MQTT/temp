@@ -36,7 +36,6 @@ if [ "$1" = "config" ]; then
 	echo	"graph_vlabel $Vlabel"
 	echo	"graph_category $Category"
 						##Azok a betük melyek nem lehetnek változó nevek
-#	ValueList |sed 's|.value .*||' |grep -v -e "[-áéíóöőúüű]" |while read nev; do
 	ValueList |sed 's|.value .*||' |sed 's|[-áéíóöőúüű]\+|_|g' |while read nev; do
 	    l="${nev}_label"; i="${nev}_info"
 	    ConfField "$nev" "${!l}" "${!i}"
