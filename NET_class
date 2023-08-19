@@ -9,7 +9,7 @@
 #
 # Created by Voli
 
-export  $( grep "^DEV=" /etc/voli/myshaper.conf |sed 's/[ \t].*//' )
+export  $( grep "^DEV=" /etc/Rendszer/myshaper.conf |sed 's/[ \t].*//' )
 #DEV=enp5s0 		#Vagy direktben is megadható
 
 if [ ".$DEV" = "." ]; then 
