@@ -11,7 +11,7 @@
     [ -z "$DEVICE" 	] && DEVICE='shellies'
 
     [ -z "$Category" 	] && Category='Shelly'
-    [ -z "$Title" 	] && Title='Shellies eszközök akkumulátor töltöttsége'
+    [ -z "$Title" 	] && Title='Shellies eszkozok akkumulator toltottsege'
     [ -z "$Vlabel" 	] && Vlabel='töltöttség [%]'
 
 #:::::: functions :::::::::::::

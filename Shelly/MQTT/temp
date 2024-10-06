@@ -12,7 +12,7 @@
     [ -z "$DEVICE" 	] && DEVICE='shellies'
 
     [ -z "$Category" 	] && Category='Shelly'
-    [ -z "$Title" 	] && Title='Shellies eszközök hőmérséklete'
+    [ -z "$Title" 	] && Title='Shellies eszközök homerseklete'
     [ -z "$Vlabel" 	] && Vlabel='hőmérséklet [°C]'
 
 #:::::: functions :::::::::::::

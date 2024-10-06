@@ -11,7 +11,7 @@
     [ -z "$DEVICE" 	] && DEVICE='shellies'
 
     [ -z "$Category" 	] && Category='Shelly'
-    [ -z "$Title" 	] && Title='Shellies eszközök álltal mért páratartalom'
+    [ -z "$Title" 	] && Title='Shellies eszkozok alltal mert paratartalom'
     [ -z "$Vlabel" 	] && Vlabel='páratartalom [%]'
 
 #:::::: functions :::::::::::::
