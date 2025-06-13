@@ -1,0 +1,53 @@
+#!/bin/sh
+# Simple Bourne Shell script that implements Munin protocoll and some common Linux plugins.
+ELOTAG=V
+
+config_wifi(){
+  echo "graph_title WiFi kapcsolodas"
+  echo "graph_vlabel A WiFi-re csatlakozas idotartama"
+  echo "graph_category Voli"
+echo "graph_args --upper-limit 180 --rigid "
+	##Static DHCP nevek
+	sed "s/^[0-9]\+ */$ELOTAG/g; s/ [0-9a-f:]\+$//; s/ .\+ /.label /; s/://g; " /var/dhcp.leases
+	grep "dhcp-host=" /var/etc/dnsmasq.conf |sed "s/^dhcp-host=/$ELOTAG/g; s/,.\+,/.label /; s/://g; "
+	
+	
+	
+	List0=" $( grep "dhcp-host=" /var/etc/dnsmasq.conf |sed 's/dhcp-host=//g; s/,.*//g; ' ) "
+	List1=" $( sed 's/^[0-9]\+ //g; s/ .*//g;' /var/dhcp.leases ) "
+	
+echo  $List0 $List1 |sed 's/ /\n/g' |sort -u -m
+	return
+	List0=" $( grep "dhcp-host=" /var/etc/dnsmasq.conf |sed 's/dhcp-host=//g; s/,.*//g; ' ) "
+
+	##Kapott DHCP-vel IP-t
+	List1=" $( sed 's/^[0-9]\+ //g; s/ .*//g;' /var/dhcp.leases ) "
+
+	##Aktiv WiFi kapcsolatok
+	List2=" $( for i in $( iwinfo |grep ESSID|sed 's/ .*//g;' ) ; do
+			iw $i station dump|grep Station|sed 's/Station//g; s/^ *//g; s/ .*//g; '
+		done ) "
+
+	##Azonossak kivetele, de a sorrend nem valtozik
+	for i in ${List0}  ${List1} ${List2}; do
+		echo $i
+	done |sort -u -m \
+		|while read a; do
+			Neve=$( grep "${a}" /var/etc/dnsmasq.conf|sed 's/.*,//g; ' )	#Static DHCP-ben a neve
+			if [ -z ${Neve} ]; then
+			   Neve=$( grep "${a}" /var/dhcp.leases |sed 's/^[0-9]\+ [0-9a-f:]\+ [0-9.]\+ //g; s/ .\+//g;' ) #DHCP-ben milyen nevet mondott
+			fi
+			if [ -z ${Neve} ]; then Neve=${a}; fi
+			echo V${a}.label ${Neve} |sed 's/://g;'
+		done;
+}
+
+if [ ".$1" = ".config" ]; then
+	config_wifi
+	exit
+fi
+
+    iw dev |grep "Interface" |sed 's/.* //' |while read If; do
+	iw $If station dump |grep -e "Station" -e "connected time:" |sed "N; s/\n/.label /; s/\t\+//g; s/Station *//; s/connected time://; s/ *seconds$//; s/ *(.\+)//; s/^/$ELOTAG/; s/://g; "
+    done
+exit 0
